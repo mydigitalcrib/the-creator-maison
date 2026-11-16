@@ -1,0 +1,28 @@
+/*
+ * Site A · Open File — design tokens
+ * Editorial archive: paper, blush, raspberry, oxblood, ink.
+ * Contrast (checked): Raspberry on Paper 5.5:1 · Muted on Paper 7.2:1 · White on Raspberry 6.3:1
+ */
+:root {
+  --paper: #f5efe7;
+  --blush: #f3c6d3;
+  --raspberry: #b8214a;
+  --oxblood: #4e0d1c;
+  --ink: #1b1416;
+  --lime: #ddf36b; /* highlighter only: always behind dark text */
+
+  --mfm-bg: var(--paper);
+  --mfm-surface: var(--blush);
+  --mfm-text: var(--ink);
+  --mfm-muted: #5c4a4f;
+  --mfm-accent: var(--raspberry);
+  --mfm-accent-contrast: #ffffff;
+  --mfm-border: var(--ink);
+  --mfm-focus: var(--oxblood);
+  --mfm-radius: 0.25rem;
+  --mfm-video-bg: var(--oxblood);
+  --mfm-video-text: var(--paper);
+
+  --mfm-font-display: var(--font-instrument-serif);
+  --mfm-font-mono: var(--font-dm-mono);
+}

@@ -1,0 +1,72 @@
+---
+/** The plain list of all work: always one click away from every page. */
+import { getCollection } from 'astro:content';
+import { categoryHref, FORMAT_LABELS, formatDuration, loadSite, videoHref } from '@mfm/content';
+import Site from '../../layouts/Site.astro';
+
+const { categories, videosByCategory, videos } = await loadSite(getCollection);
+---
+
+<Site title="All work" description={`All ${videos.length} videos, by category.`}>
+  <p class="eyebrow">{videos.length} videos · {categories.length} categories</p>
+  <h1>All work</h1>
+
+  {
+    categories.map((c) => (
+      <section class="group" aria-labelledby={`cat-${c.id}`}>
+        <h2 id={`cat-${c.id}`}>
+          <a href={categoryHref(c.id)}>{c.data.title}</a>
+        </h2>
+        <ul>
+          {(videosByCategory.get(c.id) ?? []).map((v) => (
+            <li>
+              <a href={videoHref(v)}>{v.data.title}</a>
+              <span class="meta">
+                {v.data.brand} · {FORMAT_LABELS[v.data.format]}
+                {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Site>
+
+<style>
+  h1 {
+    margin-block: 0.5rem 2rem;
+  }
+
+  .group {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--mfm-border);
+  }
+
+  .group h2 a {
+    text-decoration: none;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    align-items: baseline;
+  }
+
+  li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    font-size: 1.1rem;
+  }
+</style>

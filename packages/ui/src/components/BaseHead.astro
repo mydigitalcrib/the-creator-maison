@@ -1,0 +1,25 @@
+---
+/** Shared <head> contents: meta, social preview, favicon. */
+interface Props {
+  title: string;
+  description: string;
+  siteName: string;
+  themeColor: string;
+  /** Keep search engines out until launch (placeholder content, 3 similar sites). */
+  noindex?: boolean;
+}
+const { title, description, siteName, themeColor, noindex = true } = Astro.props;
+const fullTitle = title === siteName ? title : `${title} · ${siteName}`;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="theme-color" content={themeColor} />
+<meta property="og:type" content="website" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:site_name" content={siteName} />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+{noindex && <meta name="robots" content="noindex, nofollow" />}

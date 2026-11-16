@@ -1,0 +1,12 @@
+{
+  "name": "@mfm/content",
+  "private": true,
+  "type": "module",
+  "description": "The one shared content source for all 3 sites: categories, videos, clients, metrics, profile.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "astro": "^7.4.0"
+  }
+}

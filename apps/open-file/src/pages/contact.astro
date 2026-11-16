@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import { loadSite } from '@mfm/content';
+import ContactForm from '@mfm/ui/components/ContactForm.astro';
+import Site from '../layouts/Site.astro';
+
+const { profile } = await loadSite(getCollection);
+---
+
+<Site title="Contact" description={`Send ${profile.name} a brief.`}>
+  <p class="eyebrow">Send a brief</p>
+  <h1>Let&apos;s work together</h1>
+  <p class="intro">
+    Tell me about your brand and what you need. Prefer email? Write to{' '}
+    <a href={`mailto:${profile.email}`}>{profile.email}</a>.
+  </p>
+  <ContactForm />
+</Site>
+
+<style>
+  h1 {
+    margin-block: 0.5rem 1.5rem;
+  }
+
+  .intro {
+    max-width: 48ch;
+    font-size: 1.15rem;
+    margin-block-end: 2.5rem;
+  }
+</style>

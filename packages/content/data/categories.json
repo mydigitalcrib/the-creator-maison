@@ -1,0 +1,8 @@
+[
+  { "id": "beauty", "title": "Beauty", "order": 1, "length": "short", "blurb": "Makeup, skincare and haircare: textures, swatches and honest first impressions." },
+  { "id": "fashion", "title": "Fashion", "order": 2, "length": "short", "blurb": "Try-ons, styling and outfit stories built around real wardrobes." },
+  { "id": "wellness", "title": "Wellness", "order": 3, "length": "short", "blurb": "Rituals, routines and products that make everyday life feel softer." },
+  { "id": "tech", "title": "Tech", "order": 4, "length": "short", "blurb": "Gadgets and gear shown in real setups, not studio voids." },
+  { "id": "apps", "title": "Apps", "order": 5, "length": "short", "blurb": "Screen-first storytelling: tutorials, workflows and app walkthroughs." },
+  { "id": "storytelling", "title": "Storytelling", "order": 6, "length": "long", "blurb": "Longer, slower, introspective pieces with a narrative arc." }
+]

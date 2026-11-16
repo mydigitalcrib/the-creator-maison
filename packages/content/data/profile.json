@@ -1,0 +1,20 @@
+{
+  "main": {
+    "name": "Michelle",
+    "role": "UGC & short-form video creator",
+    "tagline": "Scroll-stopping brand videos that feel like a friend's recommendation.",
+    "location": "Placeholder City",
+    "email": "hello@example.com",
+    "bio": [
+      "Placeholder bio. Replace with a few lines about who you are, what you make, and who you make it for.",
+      "Second placeholder paragraph: your style, the formats you love, and what brands get when they work with you."
+    ],
+    "socials": [
+      { "label": "TikTok", "url": "https://www.tiktok.com/" },
+      { "label": "Instagram", "url": "https://www.instagram.com/" },
+      { "label": "YouTube", "url": "https://www.youtube.com/" },
+      { "label": "LinkedIn", "url": "https://www.linkedin.com/" }
+    ],
+    "placeholder": true
+  }
+}

@@ -1,0 +1,30 @@
+/*
+ * Site B · Pop Zine — design tokens
+ * Maximal collage: bubblegum, hot pink, acid lime, cream, cherry, ink.
+ * Contrast (checked): Deep pink on Cream 5.5:1 · White on Deep pink 5.9:1
+ * Hot pink (#FF2E88) and lime are DECORATION ONLY (fills, stickers), never body text.
+ */
+:root {
+  --bubblegum: #ff9acb;
+  --hot-pink: #ff2e88;
+  --lime: #d6f55a;
+  --cream: #fff5e6;
+  --cherry: #e3263f;
+  --ink: #161214;
+
+  --mfm-bg: var(--cream);
+  --mfm-surface: var(--bubblegum);
+  --mfm-text: var(--ink);
+  --mfm-muted: #5a4a50;
+  --mfm-accent: #c2185b; /* text-safe deep pink */
+  --mfm-accent-contrast: #ffffff;
+  --mfm-border: var(--ink);
+  --mfm-focus: var(--ink);
+  --mfm-radius: 1rem;
+  --mfm-video-bg: var(--hot-pink);
+  --mfm-video-text: var(--ink);
+
+  --mfm-font-display: var(--font-bagel-fat-one);
+  --mfm-font-script: var(--font-shrikhand);
+  --mfm-font-mono: var(--font-dm-mono);
+}

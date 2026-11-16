@@ -1,0 +1,33 @@
+/*
+ * Site C · Desktop Diary — design tokens
+ * Soft custom OS: powder pink desktop, raspberry window bars, cream windows, lilac selection.
+ * Contrast (checked): Raspberry on Cream 6.0:1 · Raspberry on Powder pink 4.7:1 · Cream on Raspberry 6.0:1
+ */
+:root {
+  --powder: #f7d6e0;
+  --raspberry: #b8214a;
+  --cream: #fff8f1;
+  --lilac: #cdb8f5;
+  --pixel: #111111;
+
+  --mfm-bg: var(--powder);
+  --mfm-surface: var(--cream);
+  --mfm-text: var(--pixel);
+  --mfm-muted: #5a4a50;
+  --mfm-accent: var(--raspberry);
+  --mfm-accent-contrast: var(--cream);
+  --mfm-border: var(--pixel);
+  --mfm-focus: var(--pixel);
+  --mfm-radius: 0.375rem;
+  --mfm-video-bg: var(--pixel);
+  --mfm-video-text: var(--cream);
+
+  --mfm-font-display: var(--font-instrument-serif);
+  --mfm-font-system: var(--font-silkscreen);
+  --mfm-font-mono: var(--font-dm-mono);
+}
+
+::selection {
+  background: var(--lilac);
+  color: var(--pixel);
+}

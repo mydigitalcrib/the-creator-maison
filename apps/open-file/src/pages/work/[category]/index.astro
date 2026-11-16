@@ -1,0 +1,96 @@
+---
+import { getCollection } from 'astro:content';
+import { FORMAT_LABELS, formatDuration, loadSite, videoHref, type Category } from '@mfm/content';
+import VideoPlayer from '@mfm/ui/components/VideoPlayer.astro';
+import Site from '../../../layouts/Site.astro';
+
+export async function getStaticPaths() {
+  const { categories } = await loadSite(getCollection);
+  return categories.map((category) => ({ params: { category: category.id }, props: { category } }));
+}
+
+const { category } = Astro.props as { category: Category };
+const { videosByCategory } = await loadSite(getCollection);
+const list = videosByCategory.get(category.id) ?? [];
+const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
+---
+
+<Site title={category.data.title} description={category.data.blurb}>
+  <p class="eyebrow"><a href="/work/">All work</a> / {category.data.title}</p>
+  <h1>{category.data.title}</h1>
+  <p class="blurb">{category.data.blurb}</p>
+
+  <ul class:list={['videos', `videos--${aspect}`]}>
+    {
+      list.map((v) => (
+        <li>
+          <article class="card">
+            <VideoPlayer
+              title={`${v.data.title}, for ${v.data.brand}`}
+              src={v.data.src}
+              poster={v.data.poster?.src}
+              captions={v.data.captions}
+              aspect={aspect}
+            />
+            <h2>
+              <a href={videoHref(v)}>{v.data.title}</a>
+            </h2>
+            <p class="meta">
+              {v.data.brand} · {FORMAT_LABELS[v.data.format]}
+              {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
+            </p>
+          </article>
+        </li>
+      ))
+    }
+  </ul>
+</Site>
+
+<style>
+  .eyebrow a {
+    color: inherit;
+  }
+
+  h1 {
+    margin-block: 0.5rem 1rem;
+  }
+
+  .blurb {
+    max-width: 48ch;
+    font-size: 1.15rem;
+    margin-block-end: 2.5rem;
+  }
+
+  .videos {
+    display: grid;
+    gap: 2rem 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .videos--portrait {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  }
+
+  .videos--landscape {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+  }
+
+  .card {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .card h2 {
+    font-size: 1.6rem;
+  }
+
+  .card h2 a {
+    text-decoration: none;
+  }
+
+  .card h2 a:hover,
+  .card h2 a:focus-visible {
+    text-decoration: underline;
+  }
+</style>

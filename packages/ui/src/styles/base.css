@@ -1,0 +1,139 @@
+/*
+ * Shared base styles for all 3 sites.
+ * Each site sets its own design tokens (--mfm-*) in its tokens.css.
+ */
+
+/* ---------- Token defaults (sites override these) ---------- */
+:root {
+  --mfm-bg: #ffffff;
+  --mfm-surface: #f4f4f4;
+  --mfm-text: #111111;
+  --mfm-muted: #555555;
+  --mfm-accent: #b8214a;
+  --mfm-accent-contrast: #ffffff;
+  --mfm-border: currentColor;
+  --mfm-focus: #111111;
+  --mfm-radius: 0.5rem;
+  --mfm-font-display: Georgia, 'Times New Roman', serif;
+  --mfm-font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mfm-font-mono: ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  --mfm-gutter: clamp(1rem, 4vw, 3rem);
+  --mfm-max: 80rem;
+  --mfm-tap: 2.75rem; /* 44px minimum tap target */
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  hanging-punctuation: first last;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--mfm-bg);
+  color: var(--mfm-text);
+  font-family: var(--mfm-font-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.18em;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ---------- Focus: always visible for keyboard users ---------- */
+:focus-visible {
+  outline: 3px solid var(--mfm-focus);
+  outline-offset: 3px;
+}
+
+/* ---------- Skip link ---------- */
+.mfm-skip {
+  position: absolute;
+  inset-inline-start: 1rem;
+  inset-block-start: 1rem;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  background: var(--mfm-text);
+  color: var(--mfm-bg);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.mfm-skip:focus {
+  transform: none;
+}
+
+/* ---------- Utilities ---------- */
+.visually-hidden:not(:focus):not(:active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Reduced motion: no movement, crossfades only ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

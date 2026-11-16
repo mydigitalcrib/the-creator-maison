@@ -1,0 +1,12 @@
+{
+  "name": "@mfm/ui",
+  "private": true,
+  "type": "module",
+  "description": "Shared building blocks for all 3 sites: video player, contact form, accessibility helpers, base styles.",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "peerDependencies": {
+    "astro": "^7.4.0"
+  }
+}

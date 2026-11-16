@@ -1,0 +1,9 @@
+---
+/** First focusable element on every page: jumps keyboard users past the header. */
+interface Props {
+  target?: string;
+}
+const { target = 'main' } = Astro.props;
+---
+
+<a class="mfm-skip" href={`#${target}`}>Skip to content</a>

@@ -1,0 +1,239 @@
+---
+/**
+ * Shared video player for all 3 sites.
+ *
+ * - Muted autoplay ONLY while at least 60% on screen, never with reduced motion
+ * - Pauses when scrolled away (saves battery and data)
+ * - Play/pause + sound buttons; turning sound on mutes every other video
+ * - Captions track when provided
+ * - No `src` yet → an accessible placeholder frame
+ *
+ * Theme with: --mfm-video-radius, --mfm-video-bg, --mfm-video-text
+ */
+interface Props {
+  /** Accessible name, e.g. "Glass skin in five minutes, for Skincare brand". */
+  title: string;
+  src?: string;
+  poster?: string;
+  captions?: string;
+  aspect?: 'portrait' | 'landscape';
+  autoplay?: boolean;
+  /** Text shown in the placeholder frame. */
+  placeholderLabel?: string;
+  class?: string;
+}
+
+const {
+  title,
+  src,
+  poster,
+  captions,
+  aspect = 'portrait',
+  autoplay = true,
+  placeholderLabel = 'Video coming soon',
+  class: className,
+} = Astro.props;
+---
+
+<mfm-video
+  class:list={['mfm-video', `mfm-video--${aspect}`, className]}
+  data-autoplay={autoplay && src ? '' : undefined}
+>
+  {
+    src ? (
+      <>
+        <video muted playsinline loop preload="metadata" poster={poster} aria-label={title}>
+          <source src={src} />
+          {captions && <track kind="captions" src={captions} srclang="en" label="English" default />}
+        </video>
+        <div class="mfm-video__controls">
+          <button type="button" class="mfm-video__btn" data-action="play" aria-label={`Play ${title}`}>
+            <span aria-hidden="true" data-icon>
+              ▶
+            </span>
+            <span data-text>Play</span>
+          </button>
+          <button type="button" class="mfm-video__btn" data-action="sound" aria-pressed="false">
+            <span aria-hidden="true">♪</span>
+            <span>Sound</span>
+          </button>
+        </div>
+      </>
+    ) : (
+      <div class="mfm-video__placeholder" role="img" aria-label={`${title}: ${placeholderLabel}`}>
+        {poster && <img src={poster} alt="" loading="lazy" decoding="async" />}
+        <span class="mfm-video__placeholder-label" aria-hidden="true">
+          {placeholderLabel}
+        </span>
+      </div>
+    )
+  }
+</mfm-video>
+
+<style>
+  .mfm-video {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--mfm-video-radius, var(--mfm-radius, 0.5rem));
+    background: var(--mfm-video-bg, #1a1a1a);
+    color: var(--mfm-video-text, #ffffff);
+    isolation: isolate;
+  }
+
+  .mfm-video--portrait {
+    aspect-ratio: 9 / 16;
+  }
+
+  .mfm-video--landscape {
+    aspect-ratio: 16 / 9;
+  }
+
+  video,
+  .mfm-video__placeholder,
+  .mfm-video__placeholder img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mfm-video__placeholder {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .mfm-video__placeholder-label {
+    position: relative;
+    font-family: var(--mfm-font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mfm-video__controls {
+    position: absolute;
+    inset-inline: 0.5rem;
+    inset-block-end: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+  }
+
+  .mfm-video__btn {
+    display: inline-flex;
+    gap: 0.4em;
+    align-items: center;
+    min-height: var(--mfm-tap, 2.75rem);
+    padding: 0 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.68);
+    color: #ffffff;
+    font-family: var(--mfm-font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+  }
+
+  .mfm-video__btn[aria-pressed='true'] {
+    background: var(--mfm-accent);
+    color: var(--mfm-accent-contrast);
+  }
+</style>
+
+<script>
+  import { onReducedMotionChange, prefersReducedMotion } from '../scripts/motion';
+
+  class MfmVideo extends HTMLElement {
+    #video: HTMLVideoElement | null = null;
+    #playBtn: HTMLButtonElement | null = null;
+    #soundBtn: HTMLButtonElement | null = null;
+    #observer: IntersectionObserver | null = null;
+    #stopWatchingMotion: () => void = () => {};
+    /** The visitor pressed pause: don't autoplay again until they press play. */
+    #userPaused = false;
+
+    connectedCallback() {
+      this.#video = this.querySelector('video');
+      if (!this.#video) return;
+      this.#playBtn = this.querySelector('[data-action="play"]');
+      this.#soundBtn = this.querySelector('[data-action="sound"]');
+      const video = this.#video;
+      const title = video.getAttribute('aria-label') ?? 'video';
+
+      const sync = () => {
+        const playing = !video.paused;
+        if (!this.#playBtn) return;
+        this.#playBtn.setAttribute('aria-label', `${playing ? 'Pause' : 'Play'} ${title}`);
+        const text = this.#playBtn.querySelector('[data-text]');
+        const icon = this.#playBtn.querySelector('[data-icon]');
+        if (text) text.textContent = playing ? 'Pause' : 'Play';
+        if (icon) icon.textContent = playing ? '❚❚' : '▶';
+      };
+      video.addEventListener('play', sync);
+      video.addEventListener('pause', sync);
+
+      this.#playBtn?.addEventListener('click', () => {
+        if (video.paused) {
+          this.#userPaused = false;
+          this.play();
+        } else {
+          this.#userPaused = true;
+          video.pause();
+        }
+      });
+
+      this.#soundBtn?.addEventListener('click', () => {
+        const turnOn = video.muted;
+        if (turnOn) {
+          document.querySelectorAll<MfmVideo>('mfm-video').forEach((el) => el !== this && el.mute());
+        }
+        video.muted = !turnOn;
+        this.#soundBtn?.setAttribute('aria-pressed', String(turnOn));
+        if (turnOn && video.paused) {
+          this.#userPaused = false;
+          this.play();
+        }
+      });
+
+      if (this.hasAttribute('data-autoplay')) {
+        this.#observer = new IntersectionObserver(
+          ([entry]) => {
+            if (!entry) return;
+            const visible = entry.isIntersecting && entry.intersectionRatio >= 0.6;
+            if (visible && !this.#userPaused && !prefersReducedMotion()) this.play();
+            if (!visible && !video.paused) video.pause();
+          },
+          { threshold: [0, 0.6] },
+        );
+        this.#observer.observe(this);
+        this.#stopWatchingMotion = onReducedMotionChange((reduce) => {
+          if (reduce && video.muted) video.pause();
+        });
+      }
+    }
+
+    disconnectedCallback() {
+      this.#observer?.disconnect();
+      this.#stopWatchingMotion();
+    }
+
+    play() {
+      this.#video?.play().catch(() => {
+        /* Autoplay blocked by the browser: the play button still works. */
+      });
+    }
+
+    mute() {
+      if (!this.#video) return;
+      this.#video.muted = true;
+      this.#soundBtn?.setAttribute('aria-pressed', 'false');
+    }
+  }
+
+  if (!customElements.get('mfm-video')) customElements.define('mfm-video', MfmVideo);
+</script>

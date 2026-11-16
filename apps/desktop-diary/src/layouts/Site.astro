@@ -1,0 +1,226 @@
+---
+/**
+ * Site C · Desktop Diary — page shell (Phase 1: structure + tokens only).
+ * Draggable windows, the phone home screen and the stories viewer arrive in Phase 2.
+ */
+import '@mfm/ui/styles/base.css';
+import '../styles/tokens.css';
+
+import { Font } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { loadSite } from '@mfm/content';
+import BaseHead from '@mfm/ui/components/BaseHead.astro';
+import SkipLink from '@mfm/ui/components/SkipLink.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { profile } = await loadSite(getCollection);
+const { title, description = profile.tagline } = Astro.props;
+
+const SITE = { letter: 'C', name: 'Desktop Diary' };
+const nav = [
+  { href: '/work/', label: 'Work' },
+  { href: '/about/', label: 'About' },
+  { href: '/proof/', label: 'Proof' },
+  { href: '/contact/', label: 'Contact' },
+];
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+const windowTitle = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'home'}.txt`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} siteName={profile.name} themeColor="#f7d6e0" />
+    <Font cssVariable="--font-silkscreen" preload />
+    <Font cssVariable="--font-instrument-serif" preload={[{ style: "normal" }]} />
+    <Font cssVariable="--font-dm-mono" />
+  </head>
+  <body>
+    <SkipLink />
+    <header class="menubar">
+      <a class="brand" href="/">{profile.name}</a>
+      <nav aria-label="Main">
+        <ul>
+          {
+            nav.map((item) => (
+              <li>
+                <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <div class="window">
+        <div class="titlebar" aria-hidden="true">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="name">{windowTitle}</span>
+        </div>
+        <div class="window-body">
+          <slot />
+        </div>
+      </div>
+    </main>
+
+    <footer class="taskbar">
+      <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+      <ul class="socials">
+        {profile.socials.map((s) => <li><a href={s.url} rel="me noopener">{s.label}</a></li>)}
+      </ul>
+      <p class="preview-tag">Preview · {SITE.letter} · {SITE.name}</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    background-color: var(--powder);
+    background-image: radial-gradient(rgb(17 17 17 / 0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  .menubar,
+  .taskbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem var(--mfm-gutter);
+    background: var(--cream);
+    font-family: var(--mfm-font-system);
+    font-size: 0.8rem;
+  }
+
+  .menubar {
+    border-bottom: 2px solid var(--pixel);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    text-decoration: none;
+  }
+
+  .menubar ul,
+  .taskbar ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .menubar nav a,
+  .taskbar a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    padding: 0 0.75rem;
+    text-decoration: none;
+  }
+
+  .menubar nav a:hover,
+  .menubar nav a[aria-current='page'] {
+    background: var(--raspberry);
+    color: var(--cream);
+  }
+
+  main {
+    width: min(100% - 2 * var(--mfm-gutter), var(--mfm-max));
+    margin-inline: auto;
+    padding-block: clamp(1.5rem, 5vw, 4rem);
+  }
+
+  main:focus {
+    outline: none;
+  }
+
+  .window {
+    border: 2px solid var(--pixel);
+    border-radius: var(--mfm-radius);
+    background: var(--cream);
+    box-shadow: 6px 6px 0 var(--pixel);
+    overflow: hidden;
+  }
+
+  .titlebar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--raspberry);
+    color: var(--cream);
+    border-bottom: 2px solid var(--pixel);
+    font-family: var(--mfm-font-system);
+    font-size: 0.8rem;
+  }
+
+  .titlebar .name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dots {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 0.35rem;
+  }
+
+  .dots i {
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 2px solid var(--pixel);
+    border-radius: 50%;
+    background: var(--cream);
+  }
+
+  .window-body {
+    padding: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  h1,
+  h2 {
+    font-family: var(--mfm-font-display);
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: clamp(2.75rem, 10vw, 7rem);
+    letter-spacing: -0.01em;
+  }
+
+  h2 {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+  }
+
+  .eyebrow,
+  .meta {
+    font-family: var(--mfm-font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    color: var(--mfm-muted);
+  }
+
+  .eyebrow {
+    font-family: var(--mfm-font-system);
+    font-size: 0.75rem;
+  }
+
+  .taskbar {
+    border-top: 2px solid var(--pixel);
+    padding-block: 0.75rem;
+  }
+</style>

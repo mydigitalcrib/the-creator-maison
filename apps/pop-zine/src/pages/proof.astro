@@ -1,0 +1,93 @@
+---
+import { getCollection } from 'astro:content';
+import { formatCompact, loadSite } from '@mfm/content';
+import Site from '../layouts/Site.astro';
+
+const { metrics, clients, categories } = await loadSite(getCollection);
+const categoryTitle = (id: string) => categories.find((c) => c.id === id)?.data.title ?? id;
+---
+
+<Site title="Proof" description="Numbers and brands behind the work.">
+  <p class="eyebrow">Numbers & brands</p>
+  <h1>Proof</h1>
+
+  <section aria-labelledby="numbers-title">
+    <h2 id="numbers-title" class="visually-hidden">Numbers</h2>
+    <dl class="metrics">
+      {
+        metrics.map((m) => (
+          <div>
+            <dt>{m.data.label}</dt>
+            <dd class="value">
+              {formatCompact(m.data.value)}
+              {m.data.suffix}
+            </dd>
+            <dd class="meta">{m.data.context}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section aria-labelledby="clients-title">
+    <h2 id="clients-title">Brands I&apos;ve worked with</h2>
+    <ul class="clients">
+      {
+        clients.map((c) => (
+          <li>
+            <span class="name">{c.data.name}</span>
+            <span class="meta">{categoryTitle(c.data.category)}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Site>
+
+<style>
+  h1 {
+    margin-block: 0.5rem 2.5rem;
+  }
+
+  .metrics {
+    display: grid;
+    gap: 2rem 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    margin-block-end: 4rem;
+  }
+
+  .metrics dt {
+    font-family: var(--mfm-font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .value {
+    font-family: var(--mfm-font-display);
+    font-size: clamp(3rem, 8vw, 5rem);
+    line-height: 1;
+    color: var(--mfm-accent);
+  }
+
+  .clients {
+    padding: 0;
+    margin-block-start: 1.25rem;
+    list-style: none;
+    border-top: 1px solid var(--mfm-border);
+  }
+
+  .clients li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--mfm-border);
+  }
+
+  .clients .name {
+    font-size: 1.25rem;
+  }
+</style>

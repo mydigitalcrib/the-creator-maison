@@ -1,0 +1,197 @@
+---
+/**
+ * Site B · Pop Zine — page shell (Phase 1: structure + tokens only).
+ * The category wheel, stickers and tickers arrive in Phase 2.
+ */
+import '@mfm/ui/styles/base.css';
+import '../styles/tokens.css';
+
+import { Font } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { loadSite } from '@mfm/content';
+import BaseHead from '@mfm/ui/components/BaseHead.astro';
+import SkipLink from '@mfm/ui/components/SkipLink.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { profile } = await loadSite(getCollection);
+const { title, description = profile.tagline } = Astro.props;
+
+const SITE = { letter: 'B', name: 'Pop Zine' };
+const nav = [
+  { href: '/work/', label: 'Work' },
+  { href: '/about/', label: 'About' },
+  { href: '/proof/', label: 'Proof' },
+  { href: '/contact/', label: 'Contact' },
+];
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} siteName={profile.name} themeColor="#ff9acb" />
+    <Font cssVariable="--font-bagel-fat-one" preload />
+    <Font cssVariable="--font-shrikhand" preload />
+    <Font cssVariable="--font-dm-mono" preload={[{ weight: "500" }]} />
+  </head>
+  <body>
+    <SkipLink />
+    <header class="site-header">
+      <a class="brand" href="/">{profile.name}</a>
+      <nav aria-label="Main">
+        <ul>
+          {
+            nav.map((item) => (
+              <li>
+                <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="inner">
+        <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+        <ul class="socials">
+          {profile.socials.map((s) => <li><a href={s.url} rel="me noopener">{s.label}</a></li>)}
+        </ul>
+        <p class="preview-tag">Preview · {SITE.letter} · {SITE.name}</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  .site-header,
+  main,
+  .site-footer .inner {
+    width: min(100% - 2 * var(--mfm-gutter), var(--mfm-max));
+    margin-inline: auto;
+  }
+
+  .site-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 1.25rem;
+  }
+
+  .brand {
+    font-family: var(--mfm-font-display);
+    font-size: 2rem;
+    line-height: 1;
+    text-decoration: none;
+    text-shadow: 3px 3px 0 var(--hot-pink);
+  }
+
+  .site-header ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-header nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    padding: 0 1rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--cream);
+    font-family: var(--mfm-font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .site-header nav a:hover,
+  .site-header nav a[aria-current='page'] {
+    background: var(--lime);
+  }
+
+  main {
+    padding-block: clamp(2rem, 6vw, 5rem);
+  }
+
+  main:focus {
+    outline: none;
+  }
+
+  h1 {
+    font-family: var(--mfm-font-display);
+    font-weight: 400;
+    font-size: clamp(3rem, 13vw, 9.5rem);
+    line-height: 1.02;
+    padding-block-end: 0.08em;
+    text-shadow: 0.06em 0.06em 0 var(--bubblegum);
+  }
+
+  h2 {
+    font-family: var(--mfm-font-script);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 5vw, 3.25rem);
+    color: var(--mfm-accent);
+  }
+
+  .eyebrow,
+  .meta {
+    font-family: var(--mfm-font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    color: var(--mfm-muted);
+  }
+
+  .eyebrow {
+    display: inline-block;
+    width: fit-content;
+    padding: 0.2rem 0.6rem;
+    background: var(--lime);
+    color: var(--ink);
+    transform: rotate(-1.5deg);
+  }
+
+  .site-footer {
+    margin-block-start: 3rem;
+    background: var(--lime);
+    border-top: 3px solid var(--ink);
+  }
+
+  .site-footer .inner {
+    display: grid;
+    gap: 1rem;
+    padding-block: 2rem 3rem;
+    font-family: var(--mfm-font-mono);
+    font-size: 0.9rem;
+  }
+
+  .site-footer ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+  }
+</style>

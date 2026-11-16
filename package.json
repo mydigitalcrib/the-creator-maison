@@ -1,0 +1,31 @@
+{
+  "name": "michelle-for-mason",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev:open-file": "npm run dev -w @mfm/open-file",
+    "dev:pop-zine": "npm run dev -w @mfm/pop-zine",
+    "dev:desktop-diary": "npm run dev -w @mfm/desktop-diary",
+    "build": "npm run build -w @mfm/open-file -w @mfm/pop-zine -w @mfm/desktop-diary",
+    "check": "npm run check -w @mfm/open-file -w @mfm/pop-zine -w @mfm/desktop-diary",
+    "test": "playwright test",
+    "test:install": "playwright install chromium firefox webkit",
+    "verify": "npm run check && npm run build && npm run test && npm run lighthouse",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "shots": "playwright test --config playwright.shots.config.ts"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@axe-core/playwright": "^4.14.0",
+    "@lhci/cli": "^0.16.1",
+    "@playwright/test": "^1.65.1",
+    "typescript": "^6.0.3"
+  }
+}

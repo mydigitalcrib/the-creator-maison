@@ -1,0 +1,86 @@
+---
+import { getCollection } from 'astro:content';
+import { categoryHref, loadSite } from '@mfm/content';
+import Site from '../layouts/Site.astro';
+
+const { profile, categories, videosByCategory } = await loadSite(getCollection);
+---
+
+<Site title={profile.name}>
+  <section class="hero" aria-labelledby="hero-title">
+    <p class="eyebrow">{profile.role}</p>
+    <h1 id="hero-title">{profile.name}</h1>
+    <p class="lede">{profile.tagline}</p>
+  </section>
+
+  <section class="work" aria-labelledby="work-title">
+    <h2 id="work-title">Work</h2>
+    <ol class="category-index">
+      {
+        categories.map((c, i) => (
+          <li>
+            <a href={categoryHref(c.id)}>
+              <span class="meta">{String(i + 1).padStart(2, '0')}</span>
+              <span class="name">{c.data.title}</span>
+              <span class="meta">{videosByCategory.get(c.id)?.length ?? 0} videos</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+    <p><a class="all-work" href="/work/">See all work as a list</a></p>
+  </section>
+</Site>
+
+<style>
+  .hero {
+    display: grid;
+    gap: 1rem;
+    padding-block-end: clamp(3rem, 8vw, 6rem);
+  }
+
+  .lede {
+    max-width: 34ch;
+    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  }
+
+  .work {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .category-index {
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--mfm-border);
+  }
+
+  .category-index a {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    min-height: var(--mfm-tap);
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--mfm-border);
+    text-decoration: none;
+  }
+
+  .category-index .name {
+    font-family: var(--mfm-font-display);
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    line-height: 1;
+  }
+
+  .category-index a:hover .name,
+  .category-index a:focus-visible .name {
+    color: var(--mfm-accent);
+  }
+
+  .all-work {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    font-family: var(--mfm-font-mono);
+  }
+</style>

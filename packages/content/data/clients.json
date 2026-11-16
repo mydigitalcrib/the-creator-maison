@@ -1,0 +1,12 @@
+[
+  { "id": "client-01", "name": "Client name 01", "category": "beauty", "order": 1, "placeholder": true },
+  { "id": "client-02", "name": "Client name 02", "category": "beauty", "order": 2, "placeholder": true },
+  { "id": "client-03", "name": "Client name 03", "category": "fashion", "order": 3, "placeholder": true },
+  { "id": "client-04", "name": "Client name 04", "category": "fashion", "order": 4, "placeholder": true },
+  { "id": "client-05", "name": "Client name 05", "category": "wellness", "order": 5, "placeholder": true },
+  { "id": "client-06", "name": "Client name 06", "category": "tech", "order": 6, "placeholder": true },
+  { "id": "client-07", "name": "Client name 07", "category": "tech", "order": 7, "placeholder": true },
+  { "id": "client-08", "name": "Client name 08", "category": "apps", "order": 8, "placeholder": true },
+  { "id": "client-09", "name": "Client name 09", "category": "apps", "order": 9, "placeholder": true },
+  { "id": "client-10", "name": "Client name 10", "category": "storytelling", "order": 10, "placeholder": true }
+]

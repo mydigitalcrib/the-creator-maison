@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# test output
+test-results/
+playwright-report/
+.lighthouseci/
+
+# env & OS
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+screenshots/
