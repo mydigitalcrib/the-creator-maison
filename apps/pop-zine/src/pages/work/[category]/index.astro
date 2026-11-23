@@ -1,7 +1,21 @@
 ---
+/**
+ * Site B · Pop Zine — a category as a zine spread:
+ * ticker band, giant title with a sticker, torn-paper note, polaroid videos.
+ */
 import { getCollection } from 'astro:content';
-import { FORMAT_LABELS, formatDuration, loadSite, videoHref, type Category } from '@mfm/content';
+import {
+  categoryHref,
+  FORMAT_LABELS,
+  formatCompact,
+  formatDuration,
+  loadSite,
+  seedFor,
+  videoHref,
+  type Category,
+} from '@mfm/content';
 import VideoPlayer from '@mfm/ui/components/VideoPlayer.astro';
+import Ticker from '../../../components/Ticker.astro';
 import Site from '../../../layouts/Site.astro';
 
 export async function getStaticPaths() {
@@ -10,27 +24,42 @@ export async function getStaticPaths() {
 }
 
 const { category } = Astro.props as { category: Category };
-const { videosByCategory } = await loadSite(getCollection);
+const { categories, videosByCategory } = await loadSite(getCollection);
 const list = videosByCategory.get(category.id) ?? [];
 const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
+const others = categories.filter((c) => c.id !== category.id);
+const tickerItems = [category.data.title, `${list.length} videos`, ...list.map((v) => v.data.title)];
 ---
 
 <Site title={category.data.title} description={category.data.blurb}>
-  <p class="eyebrow"><a href="/work/">All work</a> / {category.data.title}</p>
-  <h1>{category.data.title}</h1>
-  <p class="blurb">{category.data.blurb}</p>
+  <header class="zine-head">
+    <p class="eyebrow"><a href="/work/">All work</a> / {category.data.title}</p>
+    <div class="title-row">
+      <h1>{category.data.title}</h1>
+      <span class="count-sticker" aria-hidden="true">{list.length}<small>videos</small></span>
+    </div>
+    <div class="note">
+      <p>{category.data.blurb}</p>
+    </div>
+  </header>
+
+  <div class="ticker-tilt">
+    <Ticker items={tickerItems} tone="pink" label={`${category.data.title} ticker`} />
+  </div>
 
   <ul class:list={['videos', `videos--${aspect}`]}>
     {
-      list.map((v) => (
-        <li>
-          <article class="card">
+      list.map((v, i) => (
+        <li style={`--tilt:${[-2.5, 1.8, -1.2, 2.2][i % 4]}deg`}>
+          <article class="polaroid">
+            <span class="tape" aria-hidden="true" />
             <VideoPlayer
               title={`${v.data.title}, for ${v.data.brand}`}
               src={v.data.src}
               poster={v.data.poster?.src}
               captions={v.data.captions}
               aspect={aspect}
+              seed={seedFor(v.id)}
             />
             <h2>
               <a href={videoHref(v)}>{v.data.title}</a>
@@ -38,32 +67,91 @@ const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
             <p class="meta">
               {v.data.brand} · {FORMAT_LABELS[v.data.format]}
               {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
+              {v.data.results?.views && <> · {formatCompact(v.data.results.views)} views</>}
             </p>
           </article>
         </li>
       ))
     }
   </ul>
+
+  <nav class="more" aria-labelledby="more-title">
+    <h2 id="more-title">More vibes</h2>
+    <ul>
+      {
+        others.map((c) => (
+          <li>
+            <a href={categoryHref(c.id)}>{c.data.title}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
 </Site>
 
 <style>
-  .eyebrow a {
-    color: inherit;
-  }
-
-  h1 {
-    margin-block: 0.5rem 1rem;
-  }
-
-  .blurb {
-    max-width: 48ch;
-    font-size: 1.15rem;
+  .zine-head {
+    display: grid;
+    gap: 1rem;
     margin-block-end: 2.5rem;
   }
 
+  .zine-head .eyebrow a {
+    color: inherit;
+  }
+
+  .title-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+  }
+
+  .count-sticker {
+    display: grid;
+    place-items: center;
+    width: 6.5rem;
+    aspect-ratio: 1;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: var(--lime);
+    font-family: var(--mfm-font-display);
+    font-size: 2.4rem;
+    line-height: 0.8;
+    rotate: 12deg;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .count-sticker small {
+    font-family: var(--mfm-font-mono);
+    font-size: 0.75rem;
+  }
+
+  .note {
+    max-width: 34rem;
+    padding: 1.25rem 1.4rem 1.6rem;
+    background: #fffdf8;
+    box-shadow: 0 0.6rem 1.2rem -0.6rem rgb(22 18 20 / 0.35);
+    rotate: 1deg;
+    clip-path: polygon(
+      0 0, 100% 0, 100% 90%, 93% 100%, 85% 91%, 76% 100%, 67% 92%, 58% 100%,
+      49% 91%, 40% 100%, 31% 92%, 22% 100%, 13% 91%, 5% 100%, 0 92%
+    );
+  }
+
+  .note p {
+    font-size: 1.15rem;
+  }
+
+  .ticker-tilt {
+    rotate: -1deg;
+    margin-block-end: 3.5rem;
+  }
+
+  /* ---------- Polaroids ---------- */
   .videos {
     display: grid;
-    gap: 2rem 1.5rem;
+    gap: 3rem 2rem;
     padding: 0;
     list-style: none;
   }
@@ -76,21 +164,103 @@ const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
   }
 
-  .card {
+  .polaroid {
+    position: relative;
     display: grid;
-    gap: 0.6rem;
+    gap: 0.5rem;
+    padding: 0.8rem 0.8rem 1.2rem;
+    border: 2px solid var(--ink);
+    background: #fffdf8;
+    box-shadow: 6px 6px 0 var(--ink);
+    rotate: var(--tilt);
+    transition:
+      rotate 0.35s cubic-bezier(0.3, 1.4, 0.5, 1),
+      translate 0.35s ease,
+      box-shadow 0.35s ease;
   }
 
-  .card h2 {
-    font-size: 1.6rem;
+  .polaroid:hover,
+  .polaroid:focus-within {
+    rotate: 0deg;
+    translate: 0 -0.4rem;
+    box-shadow: 9px 9px 0 var(--hot-pink);
   }
 
-  .card h2 a {
+  .polaroid :global(.mfm-video) {
+    border-radius: 0.2rem;
+  }
+
+  .polaroid .tape {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: -0.8rem;
+    inset-inline-start: 50%;
+    width: 6rem;
+    height: 1.6rem;
+    translate: -50% 0;
+    rotate: -4deg;
+    background: rgb(214 245 90 / 0.85);
+  }
+
+  .polaroid h2 {
+    margin-block-start: 0.4rem;
+    font-size: 1.45rem;
+    line-height: 1.05;
+    color: var(--ink);
+  }
+
+  .polaroid h2 a {
     text-decoration: none;
   }
 
-  .card h2 a:hover,
-  .card h2 a:focus-visible {
+  .polaroid h2 a:hover,
+  .polaroid h2 a:focus-visible {
+    color: var(--mfm-accent);
     text-decoration: underline;
+  }
+
+  /* ---------- More vibes ---------- */
+  .more {
+    display: grid;
+    gap: 1rem;
+    margin-block-start: 4.5rem;
+  }
+
+  .more ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .more a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    padding: 0 1.2rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--bubblegum);
+    color: var(--ink);
+    font-family: var(--mfm-font-display);
+    font-size: 1.2rem;
+    text-decoration: none;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .more li:nth-child(even) a {
+    background: var(--lime);
+    rotate: 2deg;
+  }
+
+  .more li:nth-child(odd) a {
+    rotate: -2deg;
+  }
+
+  .more a:hover,
+  .more a:focus-visible {
+    rotate: 0deg;
+    background: var(--hot-pink);
   }
 </style>

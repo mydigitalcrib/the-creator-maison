@@ -1,96 +1,80 @@
 ---
+/** Site A · one category: a big title, then its videos with product-style tags. */
 import { getCollection } from 'astro:content';
-import { FORMAT_LABELS, formatDuration, loadSite, videoHref, type Category } from '@mfm/content';
-import VideoPlayer from '@mfm/ui/components/VideoPlayer.astro';
+import { categoryHref, loadSite, type Category } from '@mfm/content';
+import VideoCard from '../../../components/VideoCard.astro';
 import Site from '../../../layouts/Site.astro';
 
 export async function getStaticPaths() {
-  const { categories } = await loadSite(getCollection);
-  return categories.map((category) => ({ params: { category: category.id }, props: { category } }));
+  const categories = await getCollection('categories');
+  return categories.map((c) => ({ params: { category: c.id } }));
 }
 
-const { category } = Astro.props as { category: Category };
-const { videosByCategory } = await loadSite(getCollection);
-const list = videosByCategory.get(category.id) ?? [];
+const { categories, videosByCategory } = await loadSite(getCollection);
+const index = categories.findIndex((c) => c.id === Astro.params.category);
+const category = categories[index] as Category;
+const items = videosByCategory.get(category.id) ?? [];
 const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
+const before = categories[index - 1];
+const after = categories[index + 1];
 ---
 
 <Site title={category.data.title} description={category.data.blurb}>
-  <p class="eyebrow"><a href="/work/">All work</a> / {category.data.title}</p>
-  <h1>{category.data.title}</h1>
-  <p class="blurb">{category.data.blurb}</p>
+  <header class="page-head wrap">
+    <p class="label"><a class="link" href="/work/">All work</a> / {String(index + 1).padStart(2, '0')}</p>
+    <h1 class="display page-title" data-reveal>{category.data.title}</h1>
+    <p class="lead">{category.data.blurb}</p>
+  </header>
 
-  <ul class:list={['videos', `videos--${aspect}`]}>
+  <ul class:list={['videos wrap', `videos--${aspect}`]}>
     {
-      list.map((v) => (
-        <li>
-          <article class="card">
-            <VideoPlayer
-              title={`${v.data.title}, for ${v.data.brand}`}
-              src={v.data.src}
-              poster={v.data.poster?.src}
-              captions={v.data.captions}
-              aspect={aspect}
-            />
-            <h2>
-              <a href={videoHref(v)}>{v.data.title}</a>
-            </h2>
-            <p class="meta">
-              {v.data.brand} · {FORMAT_LABELS[v.data.format]}
-              {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
-            </p>
-          </article>
+      items.map((v, i) => (
+        <li data-reveal style={`--i:${i}`}>
+          <VideoCard video={v} aspect={aspect} side={i % 2 ? 'right' : 'left'} />
         </li>
       ))
     }
   </ul>
+
+  <nav class="pager label wrap" aria-label="Other categories">
+    {before ? <a href={categoryHref(before.id)}>← {before.data.title}</a> : <a href="/work/">← All work</a>}
+    {after ? <a href={categoryHref(after.id)}>{after.data.title} →</a> : <a href="/proof/">Proof →</a>}
+  </nav>
 </Site>
 
 <style>
-  .eyebrow a {
-    color: inherit;
-  }
-
-  h1 {
-    margin-block: 0.5rem 1rem;
-  }
-
-  .blurb {
-    max-width: 48ch;
-    font-size: 1.15rem;
-    margin-block-end: 2.5rem;
-  }
-
   .videos {
     display: grid;
-    gap: 2rem 1.5rem;
-    padding: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: clamp(1.5rem, 4vw, 4rem);
+    margin: 0;
+    padding-block: 1rem clamp(4rem, 8vw, 7rem);
     list-style: none;
   }
 
-  .videos--portrait {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  .videos--portrait > li:nth-child(2) {
+    margin-block-start: 5rem;
   }
 
   .videos--landscape {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .card {
-    display: grid;
-    gap: 0.6rem;
+  .pager {
+    margin-inline: var(--gutter);
+    padding-inline: 0;
   }
 
-  .card h2 {
-    font-size: 1.6rem;
-  }
+  @media (max-width: 47.99rem) {
+    .videos,
+    .videos--landscape {
+      grid-template-columns: 1fr;
+      padding-inline: 10%;
+    }
 
-  .card h2 a {
-    text-decoration: none;
-  }
-
-  .card h2 a:hover,
-  .card h2 a:focus-visible {
-    text-decoration: underline;
+    .videos--portrait > li:nth-child(2) {
+      margin-block-start: 0;
+    }
   }
 </style>

@@ -20,6 +20,8 @@ interface Props {
   autoplay?: boolean;
   /** Text shown in the placeholder frame. */
   placeholderLabel?: string;
+  /** 0–999: varies the placeholder art so every video looks different (see seedFor()). */
+  seed?: number;
   class?: string;
 }
 
@@ -31,8 +33,19 @@ const {
   aspect = 'portrait',
   autoplay = true,
   placeholderLabel = 'Video coming soon',
+  seed = 0,
   class: className,
 } = Astro.props;
+
+// Placeholder art: two soft color blobs over a gradient, positioned by the seed.
+// Colors come from the site's --mfm-ph-a/b/c/d tokens.
+const art = [
+  `--x1:${15 + ((seed * 37) % 70)}%`,
+  `--y1:${10 + ((seed * 53) % 45)}%`,
+  `--x2:${10 + ((seed * 71) % 80)}%`,
+  `--y2:${50 + ((seed * 29) % 45)}%`,
+  `--angle:${(seed * 47) % 360}deg`,
+].join(';');
 ---
 
 <mfm-video
@@ -60,7 +73,12 @@ const {
         </div>
       </>
     ) : (
-      <div class="mfm-video__placeholder" role="img" aria-label={`${title}: ${placeholderLabel}`}>
+      <div
+        class="mfm-video__placeholder"
+        role="img"
+        aria-label={`${title}: ${placeholderLabel}`}
+        style={art}
+      >
         {poster && <img src={poster} alt="" loading="lazy" decoding="async" />}
         <span class="mfm-video__placeholder-label" aria-hidden="true">
           {placeholderLabel}
@@ -102,15 +120,34 @@ const {
 
   .mfm-video__placeholder {
     display: grid;
-    place-items: center;
-    padding: 1rem;
-    text-align: center;
+    place-items: end start;
+    padding: 0.75rem;
+    background:
+      radial-gradient(circle at var(--x1) var(--y1), var(--mfm-ph-a, #f3c6d3) 0 14%, transparent 48%),
+      radial-gradient(circle at var(--x2) var(--y2), var(--mfm-ph-b, #b8214a) 0 10%, transparent 55%),
+      linear-gradient(var(--angle), var(--mfm-ph-c, #4e0d1c), var(--mfm-ph-d, #b8214a));
+  }
+
+  /* Film grain so the placeholder reads as "footage", not a flat block */
+  .mfm-video__placeholder::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.22;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
   }
 
   .mfm-video__placeholder-label {
     position: relative;
+    z-index: 1;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.62);
+    color: #ffffff;
     font-family: var(--mfm-font-mono);
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }

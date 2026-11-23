@@ -23,6 +23,10 @@ for (const route of ROUTES) {
     });
 
     test('has no serious or critical accessibility issues', async ({ page }) => {
+      // Videos don't autoplay with reduced motion: keeps the scan fast (Firefox slows
+      // down a lot while several videos decode at once). It doesn't change what's checked.
+      test.setTimeout(60_000);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(route);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])

@@ -5,6 +5,7 @@ category: apps
 format: engagement
 platform: instagram
 duration: 31
+src: /media/black-friday-haul.mp4
 results:
   views: 1320000
   likes: 105600

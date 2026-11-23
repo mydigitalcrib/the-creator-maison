@@ -122,8 +122,22 @@ button {
   white-space: nowrap;
 }
 
+/* ---------- Page transitions (browsers without support just load normally) ---------- */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* ---------- Reduced motion: no movement, crossfades only ---------- */
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
+
   html:focus-within {
     scroll-behavior: auto;
   }

@@ -7,6 +7,7 @@ import {
   formatDuration,
   loadSite,
   PLATFORM_LABELS,
+  seedFor,
   videoHref,
   videoSlug,
 } from '@mfm/content';
@@ -54,6 +55,7 @@ const results = [
       poster={v.poster?.src}
       captions={v.captions}
       aspect={aspect}
+      seed={seedFor(entry.id)}
     />
 
     <div class="details">

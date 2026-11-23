@@ -5,6 +5,7 @@ category: wellness
 format: narrator
 platform: tiktok
 duration: 29
+src: /media/shein-mini-haul.mp4
 results:
   views: 640000
   likes: 51200

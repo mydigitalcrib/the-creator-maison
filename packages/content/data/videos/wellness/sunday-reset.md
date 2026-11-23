@@ -5,6 +5,7 @@ category: wellness
 format: day-in-the-life
 platform: instagram
 duration: 44
+src: /media/skincare-12-days.mp4
 results:
   views: 720000
   likes: 57600

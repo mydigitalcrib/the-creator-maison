@@ -17,7 +17,7 @@
 
 ## Still to fill in (placeholders until then)
 
-- [ ] **Your name / brand name** as it should appear on the sites
+- [x] **Your name / brand name**: Sinai Rivodó
 - [ ] **One-line intro** (what you do, who you make videos for)
 - [ ] **Photos of you**: at least 1 portrait, ideally 3–5 (one with a plain background for cut-outs)
 - [ ] **Videos**: original files, ideally 2–4 per category

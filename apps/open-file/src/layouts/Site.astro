@@ -1,10 +1,13 @@
 ---
 /**
- * Site A · Open File — page shell (Phase 1: structure + tokens only).
- * The tab-stack navigation and folder transitions arrive in Phase 2.
+ * Site A — editorial "drop" layout.
+ * A fixed header (name + nav), the page, a footer, and the shared interactions:
+ * scroll reveals, count-ups, cursor-following video previews, tilting cards and the
+ * home hero's cursor-follow + lift-off on scroll.
  */
 import '@mfm/ui/styles/base.css';
 import '../styles/tokens.css';
+import '../styles/site.css';
 
 import { Font } from 'astro:assets';
 import { getCollection } from 'astro:content';
@@ -20,34 +23,42 @@ interface Props {
 const { profile } = await loadSite(getCollection);
 const { title, description = profile.tagline } = Astro.props;
 
-const SITE = { letter: 'A', name: 'Open File' };
+// the page's path without the GitHub Pages base (/the-creator-maison/), so the nav knows where you are
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const path = base && Astro.url.pathname.startsWith(base) ? Astro.url.pathname.slice(base.length) || '/' : Astro.url.pathname;
 const nav = [
   { href: '/work/', label: 'Work' },
   { href: '/about/', label: 'About' },
   { href: '/proof/', label: 'Proof' },
   { href: '/contact/', label: 'Contact' },
 ];
-const path = Astro.url.pathname;
-const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+const isCurrent = (href: string) => path.startsWith(href);
+const year = new Date().getFullYear();
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
   <head>
-    <BaseHead title={title} description={description} siteName={profile.name} themeColor="#f5efe7" />
-    <Font cssVariable="--font-instrument-serif" preload />
-    <Font cssVariable="--font-dm-mono" preload={[{ weight: "400" }]} />
+    <BaseHead title={title} description={description} siteName={profile.name} themeColor="#efede8" />
+    <Font cssVariable="--font-anton" preload />
+    <Font cssVariable="--font-dm-mono" preload />
+    <Font cssVariable="--font-inter-tight-text" preload />
+    <script is:inline>document.documentElement.classList.replace('no-js', 'js');</script>
   </head>
   <body>
     <SkipLink />
-    <header class="site-header">
-      <a class="brand" href="/">{profile.name}</a>
-      <nav aria-label="Main">
+
+    <header class="site-header" data-header>
+      <a class="brand" href="/">
+        <span class="brand-mark">{profile.name}</span>
+        <span class="label label--muted brand-meta">{profile.role} — {profile.location}</span>
+      </a>
+      <nav class="nav" aria-label="Main">
         <ul>
           {
             nav.map((item) => (
               <li>
-                <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                <a class="label" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
                   {item.label}
                 </a>
               </li>
@@ -62,125 +73,153 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     </main>
 
     <footer class="site-footer">
-      <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
-      <ul class="socials">
-        {profile.socials.map((s) => <li><a href={s.url} rel="me noopener">{s.label}</a></li>)}
+      <p class="label">© {year} {profile.name}</p>
+      <ul class="label">
+        <li><a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></li>
+        {
+          profile.socials.map((s) => (
+            <li>
+              <a class="link" href={s.url} rel="me noopener">
+                {s.label}
+              </a>
+            </li>
+          ))
+        }
       </ul>
-      <p class="preview-tag">Preview · {SITE.letter} · {SITE.name}</p>
     </footer>
+
+    <div class="cursor-preview" aria-hidden="true" data-cursor-preview>
+      <video muted playsinline loop preload="none"></video>
+    </div>
+
+    <script>
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fine = window.matchMedia('(pointer: fine)').matches;
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+      // Header gets a background once you scroll.
+      const header = document.querySelector<HTMLElement>('[data-header]');
+      const onScrollHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 24);
+      onScrollHeader();
+      window.addEventListener('scroll', onScrollHeader, { passive: true });
+
+      // Count-up numbers ("12.4M") when they come into view.
+      const countUp = (el: HTMLElement) => {
+        const target = Number(el.dataset.count);
+        const suffix = el.dataset.suffix ?? '';
+        const fmt = new Intl.NumberFormat('en', { notation: target >= 10000 ? 'compact' : 'standard', maximumFractionDigits: 1 });
+        if (reduce || !Number.isFinite(target)) return;
+        const start = performance.now();
+        const dur = 1400;
+        const step = (now: number) => {
+          const t = Math.min(1, (now - start) / dur);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = fmt.format(target * eased) + suffix;
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+
+      // Scroll reveals.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const el = e.target as HTMLElement;
+            el.classList.add('is-in');
+            el.querySelectorAll<HTMLElement>('[data-count]').forEach(countUp);
+            if (el.dataset.count) countUp(el);
+            io.unobserve(el);
+          }
+        },
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.12 },
+      );
+      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+
+      // Hovering a row shows its video next to the cursor (mouse only, motion allowed).
+      const preview = document.querySelector<HTMLElement>('[data-cursor-preview]');
+      const pv = preview?.querySelector('video');
+      if (preview && pv && fine && !reduce) {
+        let x = 0;
+        let y = 0;
+        let tx = 0;
+        let ty = 0;
+        let raf = 0;
+        const follow = () => {
+          x = lerp(x, tx, 0.18);
+          y = lerp(y, ty, 0.18);
+          preview.style.transform = `translate(${x + 24}px, ${y - preview.offsetHeight / 2}px) rotate(${(tx - x) * 0.05}deg)`;
+          raf = requestAnimationFrame(follow);
+        };
+        document.querySelectorAll<HTMLElement>('[data-preview]').forEach((row) => {
+          row.addEventListener('pointerenter', (e) => {
+            const src = row.dataset.preview;
+            if (!src) return;
+            if (pv.getAttribute('src') !== src) pv.setAttribute('src', src);
+            pv.play().catch(() => {});
+            tx = x = e.clientX;
+            ty = y = e.clientY;
+            preview.classList.add('is-on');
+            if (!raf) raf = requestAnimationFrame(follow);
+          });
+          row.addEventListener('pointermove', (e) => {
+            tx = e.clientX;
+            ty = e.clientY;
+          });
+          row.addEventListener('pointerleave', () => {
+            preview.classList.remove('is-on');
+            pv.pause();
+            cancelAnimationFrame(raf);
+            raf = 0;
+          });
+        });
+      }
+
+      // Cards that tilt toward the cursor.
+      if (fine && !reduce) {
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
+          card.addEventListener('pointermove', (e) => {
+            const r = card.getBoundingClientRect();
+            const px = (e.clientX - r.left) / r.width - 0.5;
+            const py = (e.clientY - r.top) / r.height - 0.5;
+            card.style.setProperty('--rx', `${(-py * 10).toFixed(2)}deg`);
+            card.style.setProperty('--ry', `${(px * 12).toFixed(2)}deg`);
+          });
+          card.addEventListener('pointerleave', () => {
+            card.style.setProperty('--rx', '0deg');
+            card.style.setProperty('--ry', '0deg');
+          });
+        });
+      }
+
+      // Home hero: the photo follows the cursor and lifts off as you scroll.
+      const hero = document.querySelector<HTMLElement>('[data-hero]');
+      if (hero && !reduce) {
+        let mx = 0;
+        let my = 0;
+        let tmx = 0;
+        let tmy = 0;
+        const loop = () => {
+          mx = lerp(mx, tmx, 0.08);
+          my = lerp(my, tmy, 0.08);
+          hero.style.setProperty('--mx', mx.toFixed(4));
+          hero.style.setProperty('--my', my.toFixed(4));
+          const p = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 0.9)));
+          hero.style.setProperty('--p', p.toFixed(4));
+          requestAnimationFrame(loop);
+        };
+        if (fine) {
+          window.addEventListener(
+            'pointermove',
+            (e) => {
+              tmx = (e.clientX / innerWidth) * 2 - 1;
+              tmy = (e.clientY / innerHeight) * 2 - 1;
+            },
+            { passive: true },
+          );
+        }
+        requestAnimationFrame(loop);
+      }
+    </script>
   </body>
 </html>
-
-<style is:global>
-  .site-header,
-  .site-footer,
-  main {
-    width: min(100% - 2 * var(--mfm-gutter), var(--mfm-max));
-    margin-inline: auto;
-  }
-
-  .site-header {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2rem;
-    align-items: center;
-    justify-content: space-between;
-    padding-block: 1.25rem;
-    border-bottom: 1px solid var(--mfm-border);
-  }
-
-  .brand {
-    font-family: var(--mfm-font-display);
-    font-size: 1.75rem;
-    font-style: italic;
-    text-decoration: none;
-  }
-
-  .site-header ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
-    padding: 0;
-    list-style: none;
-  }
-
-  .site-header nav a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-
-  .site-header nav a[aria-current='page'] {
-    color: var(--mfm-accent);
-    text-decoration: underline;
-  }
-
-  main {
-    padding-block: clamp(2rem, 6vw, 5rem);
-  }
-
-  main:focus {
-    outline: none;
-  }
-
-  h1,
-  h2 {
-    font-family: var(--mfm-font-display);
-    font-weight: 400;
-  }
-
-  h1 {
-    font-size: clamp(3rem, 12vw, 9rem);
-    letter-spacing: -0.02em;
-  }
-
-  h2 {
-    font-size: clamp(2rem, 5vw, 3.5rem);
-  }
-
-  h1 em,
-  h2 em {
-    color: var(--mfm-accent);
-  }
-
-  .eyebrow,
-  .meta {
-    font-family: var(--mfm-font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--mfm-muted);
-  }
-
-  .site-footer {
-    display: grid;
-    gap: 1rem;
-    padding-block: 2rem 3rem;
-    border-top: 1px solid var(--mfm-border);
-    font-family: var(--mfm-font-mono);
-    font-size: 0.85rem;
-  }
-
-  .site-footer ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    padding: 0;
-    list-style: none;
-  }
-
-  .site-footer a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--mfm-tap);
-  }
-
-  .preview-tag {
-    color: var(--mfm-muted);
-  }
-</style>

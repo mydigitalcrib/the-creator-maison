@@ -1,7 +1,22 @@
 ---
+/**
+ * Site C · Desktop Diary — a folder opened full size, like a file browser:
+ * sidebar of folders, a toolbar, and the videos as a gallery of files.
+ */
 import { getCollection } from 'astro:content';
-import { FORMAT_LABELS, formatDuration, loadSite, videoHref, type Category } from '@mfm/content';
+import {
+  categoryHref,
+  FORMAT_LABELS,
+  formatCompact,
+  formatDuration,
+  loadSite,
+  seedFor,
+  videoHref,
+  videoSlug,
+  type Category,
+} from '@mfm/content';
 import VideoPlayer from '@mfm/ui/components/VideoPlayer.astro';
+import PixelIcon from '../../../components/PixelIcon.astro';
 import Site from '../../../layouts/Site.astro';
 
 export async function getStaticPaths() {
@@ -10,87 +25,244 @@ export async function getStaticPaths() {
 }
 
 const { category } = Astro.props as { category: Category };
-const { videosByCategory } = await loadSite(getCollection);
+const { categories, videosByCategory } = await loadSite(getCollection);
 const list = videosByCategory.get(category.id) ?? [];
 const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
 ---
 
 <Site title={category.data.title} description={category.data.blurb}>
-  <p class="eyebrow"><a href="/work/">All work</a> / {category.data.title}</p>
-  <h1>{category.data.title}</h1>
-  <p class="blurb">{category.data.blurb}</p>
+  <div class="browser">
+    <nav class="sidebar" aria-label="Folders">
+      <p class="sidebar-title">Folders</p>
+      <ul>
+        {
+          categories.map((c) => (
+            <li>
+              <a href={categoryHref(c.id)} aria-current={c.id === category.id ? 'page' : undefined}>
+                <PixelIcon kind="folder" tone={c.id === category.id ? 'raspberry' : 'cream'} />
+                <span>{c.data.title}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
 
-  <ul class:list={['videos', `videos--${aspect}`]}>
-    {
-      list.map((v) => (
-        <li>
-          <article class="card">
-            <VideoPlayer
-              title={`${v.data.title}, for ${v.data.brand}`}
-              src={v.data.src}
-              poster={v.data.poster?.src}
-              captions={v.data.captions}
-              aspect={aspect}
-            />
-            <h2>
-              <a href={videoHref(v)}>{v.data.title}</a>
-            </h2>
-            <p class="meta">
-              {v.data.brand} · {FORMAT_LABELS[v.data.format]}
-              {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
-            </p>
-          </article>
-        </li>
-      ))
-    }
-  </ul>
+    <div class="content">
+      <div class="toolbar">
+        <p class="path">
+          <a href="/">Desktop</a> / <a href="/work/">All work</a> / <span>{category.data.title}</span>
+        </p>
+        <p class="count">{list.length} items</p>
+      </div>
+
+      <header class="folder-head">
+        <h1>{category.data.title}</h1>
+        <p class="blurb">{category.data.blurb}</p>
+      </header>
+
+      <ul class:list={['videos', `videos--${aspect}`]}>
+        {
+          list.map((v) => (
+            <li>
+              <article class="file">
+                <VideoPlayer
+                  title={`${v.data.title}, for ${v.data.brand}`}
+                  src={v.data.src}
+                  poster={v.data.poster?.src}
+                  captions={v.data.captions}
+                  aspect={aspect}
+                  seed={seedFor(v.id)}
+                />
+                <p class="file-name" aria-hidden="true">{videoSlug(v.id)}.mp4</p>
+                <h2>
+                  <a href={videoHref(v)}>{v.data.title}</a>
+                </h2>
+                <p class="meta">
+                  {v.data.brand} · {FORMAT_LABELS[v.data.format]}
+                  {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
+                  {v.data.results?.views && <> · {formatCompact(v.data.results.views)} views</>}
+                </p>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
 </Site>
 
 <style>
-  .eyebrow a {
+  .browser {
+    display: grid;
+    grid-template-columns: 12rem 1fr;
+    margin: calc(-1 * clamp(1.25rem, 4vw, 3rem));
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    padding: 1rem 0.75rem;
+    border-inline-end: 2px solid var(--pixel);
+    background: var(--powder);
+  }
+
+  .sidebar-title {
+    padding-inline: 0.5rem;
+    margin-block-end: 0.5rem;
+    font-family: var(--mfm-font-system);
+    font-size: 0.7rem;
+  }
+
+  .sidebar ul {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sidebar a {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    min-height: var(--mfm-tap);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    color: var(--pixel);
+    font-family: var(--mfm-font-mono);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .sidebar a :global(.pixel-icon) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .sidebar a:hover,
+  .sidebar a:focus-visible {
+    background: rgb(205 184 245 / 0.75);
+  }
+
+  .sidebar a[aria-current='page'] {
+    background: var(--raspberry);
+    color: var(--cream);
+  }
+
+  /* ---------- Content ---------- */
+  .content {
+    min-width: 0;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1.25rem;
+    border-bottom: 2px solid var(--pixel);
+    background: var(--cream);
+    font-family: var(--mfm-font-mono);
+    font-size: 0.8rem;
+  }
+
+  .path a {
     color: inherit;
   }
 
-  h1 {
-    margin-block: 0.5rem 1rem;
+  .folder-head {
+    display: grid;
+    gap: 0.75rem;
+    padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem) 0;
+  }
+
+  .folder-head h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.9;
   }
 
   .blurb {
-    max-width: 48ch;
-    font-size: 1.15rem;
-    margin-block-end: 2.5rem;
+    max-width: 46ch;
+    font-size: 1.1rem;
   }
 
   .videos {
     display: grid;
     gap: 2rem 1.5rem;
-    padding: 0;
+    padding: clamp(1.25rem, 3vw, 2rem);
     list-style: none;
   }
 
   .videos--portrait {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
   }
 
   .videos--landscape {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
   }
 
-  .card {
+  .file {
     display: grid;
-    gap: 0.6rem;
+    gap: 0.45rem;
+    padding: 0.5rem;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
   }
 
-  .card h2 {
-    font-size: 1.6rem;
+  .file:hover,
+  .file:focus-within {
+    border-color: var(--pixel);
+    background: rgb(205 184 245 / 0.35);
   }
 
-  .card h2 a {
+  .file :global(.mfm-video) {
+    border: 2px solid var(--pixel);
+  }
+
+  .file-name {
+    font-family: var(--mfm-font-system);
+    font-size: 0.7rem;
+    overflow-wrap: anywhere;
+  }
+
+  .file h2 {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .file h2 a {
     text-decoration: none;
   }
 
-  .card h2 a:hover,
-  .card h2 a:focus-visible {
+  .file h2 a:hover,
+  .file h2 a:focus-visible {
+    color: var(--raspberry);
     text-decoration: underline;
+  }
+
+  /* ---------- Phone: folders become a scrolling row ---------- */
+  @media (max-width: 47.99rem) {
+    .browser {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      border-inline-end: 0;
+      border-bottom: 2px solid var(--pixel);
+      padding: 0.5rem;
+    }
+
+    .sidebar-title {
+      display: none;
+    }
+
+    .sidebar ul {
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .sidebar a {
+      white-space: nowrap;
+    }
   }
 </style>

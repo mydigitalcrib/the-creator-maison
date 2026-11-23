@@ -1,86 +1,524 @@
 ---
+/**
+ * Site C · Desktop Diary — home: a soft pink desktop.
+ *
+ * - Folder icons are real links (no JavaScript → they open the folder page)
+ * - On desktop screens, clicking a folder opens it as a window instead
+ *   (non-modal dialog: Esc or × closes it, focus goes back to the icon)
+ * - Windows can be dragged by their title bar; clicking one brings it to the front
+ * - Phones (< 768px): a home screen of app icons with a dock; folders open as pages
+ */
 import { getCollection } from 'astro:content';
-import { categoryHref, loadSite } from '@mfm/content';
+import { categoryHref, loadSite, seedFor, videoHref, videoSlug } from '@mfm/content';
+import PixelIcon from '../components/PixelIcon.astro';
 import Site from '../layouts/Site.astro';
 
-const { profile, categories, videosByCategory } = await loadSite(getCollection);
+const { profile, categories, videosByCategory, videos } = await loadSite(getCollection);
+const tones = ['raspberry', 'lilac', 'cream'] as const;
+const dock = [
+  { href: '/work/', label: 'All work', kind: 'list' },
+  { href: '/about/', label: 'About.txt', kind: 'note' },
+  { href: '/proof/', label: 'Proof.app', kind: 'chart' },
+  { href: '/contact/', label: 'Mail.app', kind: 'mail' },
+] as const;
 ---
 
-<Site title={profile.name}>
-  <section class="hero" aria-labelledby="hero-title">
-    <p class="eyebrow">{profile.role}</p>
-    <h1 id="hero-title">{profile.name}</h1>
-    <p class="lede">{profile.tagline}</p>
-  </section>
+<Site title={profile.name} bare>
+  <diary-desktop class="desktop">
+    <section class="window welcome" aria-labelledby="hero-title" data-draggable style="--x:34%;--y:8%">
+      <div class="titlebar" data-drag-handle>
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="name" aria-hidden="true">hello.txt</span>
+      </div>
+      <div class="window-body">
+        {
+          profile.portrait && (
+            <img
+              class="welcome-photo"
+              src={profile.portrait}
+              alt={`Portrait of ${profile.name}`}
+              width="655"
+              height="795"
+            />
+          )
+        }
+        <p class="eyebrow">{profile.role}</p>
+        <h1 id="hero-title">{profile.name}</h1>
+        <p class="lede">{profile.tagline}</p>
+        <p class="hint meta">
+          {videos.length} videos in {categories.length} folders. Open a folder to look inside, or{' '}
+          <a class="all-work" href="/work/">see all work as a list</a>.
+        </p>
+      </div>
+    </section>
 
-  <section class="work" aria-labelledby="work-title">
-    <h2 id="work-title">Work</h2>
-    <ol class="category-index">
-      {
-        categories.map((c, i) => (
-          <li>
-            <a href={categoryHref(c.id)}>
-              <span class="meta">{String(i + 1).padStart(2, '0')}</span>
-              <span class="name">{c.data.title}</span>
-              <span class="meta">{videosByCategory.get(c.id)?.length ?? 0} videos</span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-    <p><a class="all-work" href="/work/">See all work as a list</a></p>
-  </section>
+    <nav class="icons" aria-label="Folders">
+      <ul>
+        {
+          categories.map((c, i) => (
+            <li>
+              <a class="icon" href={categoryHref(c.id)} data-window={`win-${c.id}`}>
+                <PixelIcon kind="folder" tone={tones[i % tones.length]} />
+                <span class="icon-label">{c.data.title}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    {
+      categories.map((c, i) => {
+        const list = videosByCategory.get(c.id) ?? [];
+        return (
+          <dialog
+            class="window folder-window"
+            id={`win-${c.id}`}
+            aria-labelledby={`win-${c.id}-title`}
+            data-draggable
+            style={`--x:${20 + i * 3}%;--y:${6 + i * 4}%`}
+          >
+            <div class="titlebar" data-drag-handle>
+              <button type="button" class="close" data-close aria-label={`Close ${c.data.title}`}>
+                <span aria-hidden="true">×</span>
+              </button>
+              <h2 id={`win-${c.id}-title`} class="name">
+                {c.data.title}
+              </h2>
+            </div>
+            <div class="toolbar meta">
+              <span>Desktop / {c.data.title}</span>
+              <span>{list.length} items</span>
+            </div>
+            <ul class="files">
+              {list.map((v) => (
+                <li>
+                  <a href={videoHref(v)}>
+                    <span class="thumb" style={`--seed:${seedFor(v.id)}`} aria-hidden="true" />
+                    <span class="file-name">{videoSlug(v.id)}.mp4</span>
+                    <span class="visually-hidden">: {v.data.title}, for {v.data.brand}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p class="open-folder">
+              <a href={categoryHref(c.id)}>Open {c.data.title} folder →</a>
+            </p>
+          </dialog>
+        );
+      })
+    }
+
+    <nav class="dock" aria-label="Apps">
+      <ul>
+        {
+          dock.map((d) => (
+            <li>
+              <a href={d.href} class="dock-app">
+                <PixelIcon kind={d.kind} />
+                <span class="icon-label">{d.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </diary-desktop>
 </Site>
 
+<script>
+  const WIDE = window.matchMedia('(min-width: 48rem)');
+
+  class DiaryDesktop extends HTMLElement {
+    #z = 10;
+
+    connectedCallback() {
+      this.querySelectorAll<HTMLElement>('[data-draggable]').forEach((win) => this.#makeDraggable(win));
+
+      this.querySelectorAll<HTMLAnchorElement>('a[data-window]').forEach((icon) => {
+        const win = this.querySelector<HTMLDialogElement>(`#${icon.dataset.window}`);
+        if (!win) return;
+        icon.addEventListener('click', (event) => {
+          if (!WIDE.matches) return; // phones: open the folder page
+          event.preventDefault();
+          this.#open(win, icon);
+        });
+      });
+
+      this.querySelectorAll<HTMLDialogElement>('dialog').forEach((win) => {
+        win.querySelector('[data-close]')?.addEventListener('click', () => this.#close(win));
+        win.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            this.#close(win);
+          }
+        });
+      });
+    }
+
+    #openers = new WeakMap<HTMLDialogElement, HTMLElement>();
+
+    #open(win: HTMLDialogElement, opener: HTMLElement) {
+      this.#openers.set(win, opener);
+      if (!win.open) win.show();
+      this.#front(win);
+      win.querySelector<HTMLElement>('.files a, [data-close]')?.focus();
+    }
+
+    #close(win: HTMLDialogElement) {
+      win.close();
+      this.#openers.get(win)?.focus();
+    }
+
+    #front(win: HTMLElement) {
+      win.style.zIndex = String(++this.#z);
+    }
+
+    #makeDraggable(win: HTMLElement) {
+      const handle = win.querySelector<HTMLElement>('[data-drag-handle]');
+      win.addEventListener('pointerdown', () => this.#front(win));
+      if (!handle) return;
+      handle.addEventListener('pointerdown', (event) => {
+        if (!WIDE.matches || (event.target as HTMLElement).closest('button, a')) return;
+        const bounds = this.getBoundingClientRect();
+        const start = win.getBoundingClientRect();
+        const dx = event.clientX - start.left;
+        const dy = event.clientY - start.top;
+        handle.setPointerCapture(event.pointerId);
+        win.classList.add('is-dragging');
+
+        const move = (e: PointerEvent) => {
+          const x = Math.min(Math.max(e.clientX - dx - bounds.left, 0), bounds.width - 120);
+          const y = Math.min(Math.max(e.clientY - dy - bounds.top, 0), bounds.height - 48);
+          win.style.setProperty('--x', `${x}px`);
+          win.style.setProperty('--y', `${y}px`);
+        };
+        const up = () => {
+          win.classList.remove('is-dragging');
+          handle.removeEventListener('pointermove', move);
+          handle.removeEventListener('pointerup', up);
+          handle.removeEventListener('pointercancel', up);
+        };
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+        handle.addEventListener('pointercancel', up);
+      });
+    }
+  }
+
+  if (!customElements.get('diary-desktop')) customElements.define('diary-desktop', DiaryDesktop);
+</script>
+
 <style>
-  .hero {
+  .desktop {
+    position: relative;
+    display: block;
+    min-height: max(40rem, calc(100dvh - 7rem));
+    padding: 1.5rem var(--mfm-gutter) 7rem;
+    overflow: hidden;
+  }
+
+  /* big faint watermark on the wallpaper */
+  .desktop::before {
+    content: 'diary';
+    position: absolute;
+    inset-block-end: 4rem;
+    inset-inline-end: 2rem;
+    font-family: var(--mfm-font-display);
+    font-size: clamp(6rem, 20vw, 18rem);
+    font-style: italic;
+    line-height: 1;
+    color: rgb(184 33 74 / 0.08);
+    pointer-events: none;
+  }
+
+  /* ---------- Windows ---------- */
+  [data-draggable] {
+    position: absolute;
+    inset-inline-start: var(--x);
+    inset-block-start: var(--y);
+    margin: 0;
+  }
+
+  .welcome {
+    width: min(30rem, 52%);
+    z-index: 5;
+  }
+
+  .welcome-photo {
+    justify-self: end;
+    grid-row: 1 / span 3;
+    grid-column: 2;
+    width: 9rem;
+    height: auto;
+    border: 2px solid var(--pixel);
+    border-bottom-width: 1.5rem;
+    background: var(--cream);
+    box-shadow: 4px 4px 0 var(--pixel);
+    rotate: 3deg;
+  }
+
+  .welcome .window-body > :not(.welcome-photo) {
+    grid-column: 1;
+  }
+
+  @media (max-width: 47.99rem) {
+    .welcome-photo {
+      width: 6rem;
+    }
+  }
+
+  .welcome .window-body {
+    grid-template-columns: 1fr auto;
     display: grid;
-    gap: 1rem;
-    padding-block-end: clamp(3rem, 8vw, 6rem);
+    gap: 0.9rem;
+  }
+
+  .welcome h1 {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 0.9;
   }
 
   .lede {
-    max-width: 34ch;
-    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
-  }
-
-  .work {
-    display: grid;
-    gap: 1.5rem;
-  }
-
-  .category-index {
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--mfm-border);
-  }
-
-  .category-index a {
-    display: grid;
-    grid-template-columns: 3rem 1fr auto;
-    gap: 1rem;
-    align-items: baseline;
-    min-height: var(--mfm-tap);
-    padding-block: 1rem;
-    border-bottom: 1px solid var(--mfm-border);
-    text-decoration: none;
-  }
-
-  .category-index .name {
     font-family: var(--mfm-font-display);
-    font-size: clamp(1.75rem, 5vw, 3rem);
+    font-size: 1.5rem;
+    font-style: italic;
+    line-height: 1.15;
+  }
+
+  .titlebar[data-drag-handle] {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .is-dragging .titlebar {
+    cursor: grabbing;
+  }
+
+  .is-dragging {
+    box-shadow: 10px 10px 0 var(--pixel) !important;
+  }
+
+  .folder-window {
+    width: min(26rem, 90%);
+    padding: 0;
+    color: var(--pixel);
+  }
+
+  .folder-window .titlebar {
+    gap: 0.6rem;
+  }
+
+  .folder-window h2.name {
+    font-family: var(--mfm-font-system);
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .close {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 2px solid var(--pixel);
+    border-radius: 50%;
+    background: var(--cream);
+    color: var(--pixel);
+    font-size: 1rem;
     line-height: 1;
   }
 
-  .category-index a:hover .name,
-  .category-index a:focus-visible .name {
-    color: var(--mfm-accent);
+  /* 44px tap area around the small close button */
+  .close::after {
+    content: '';
+    position: absolute;
+    width: var(--mfm-tap);
+    height: var(--mfm-tap);
   }
 
-  .all-work {
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0.9rem;
+    border-bottom: 2px solid var(--pixel);
+    background: var(--powder);
+    font-size: 0.75rem;
+  }
+
+  .files {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+    list-style: none;
+  }
+
+  .files a {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: center;
+    padding: 0.4rem;
+    border-radius: 0.3rem;
+    color: inherit;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .files a:hover,
+  .files a:focus-visible {
+    background: var(--lilac);
+  }
+
+  .thumb {
+    width: 3.6rem;
+    aspect-ratio: 9 / 16;
+    border: 2px solid var(--pixel);
+    background:
+      radial-gradient(circle at 30% 30%, var(--lilac) 0 18%, transparent 55%),
+      linear-gradient(calc(var(--seed) * 0.36deg), var(--raspberry), var(--powder));
+  }
+
+  .file-name {
+    font-family: var(--mfm-font-mono);
+    font-size: 0.65rem;
+    overflow-wrap: anywhere;
+  }
+
+  .open-folder {
+    padding: 0 1rem 1rem;
+    font-family: var(--mfm-font-mono);
+    font-size: 0.85rem;
+  }
+
+  .open-folder a {
     display: inline-flex;
     align-items: center;
     min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
+  }
+
+  /* ---------- Desktop icons ---------- */
+  .icons ul {
+    display: grid;
+    grid-auto-flow: row;
+    gap: 0.75rem;
+    width: max-content;
+    padding: 0;
+    list-style: none;
+  }
+
+  .icon,
+  .dock-app {
+    display: grid;
+    justify-items: center;
+    gap: 0.3rem;
+    width: 6.5rem;
+    padding: 0.4rem;
+    border-radius: 0.4rem;
+    color: var(--pixel);
+    text-decoration: none;
+  }
+
+  .icon:hover,
+  .icon:focus-visible,
+  .dock-app:hover,
+  .dock-app:focus-visible {
+    background: rgb(205 184 245 / 0.75);
+  }
+
+  .icon-label {
+    padding: 0.1rem 0.35rem;
+    background: var(--cream);
+    font-family: var(--mfm-font-system);
+    font-size: 0.7rem;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  /* ---------- Dock ---------- */
+  .dock {
+    position: absolute;
+    inset-block-end: 1rem;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    z-index: 4;
+  }
+
+  .dock ul {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--pixel);
+    border-radius: 1rem;
+    background: rgb(255 248 241 / 0.85);
+    box-shadow: 4px 4px 0 var(--pixel);
+    list-style: none;
+  }
+
+  .dock-app :global(.pixel-icon) {
+    transition: transform 0.2s ease;
+  }
+
+  .dock-app:hover :global(.pixel-icon),
+  .dock-app:focus-visible :global(.pixel-icon) {
+    transform: translateY(-0.4rem) scale(1.15);
+  }
+
+  /* ---------- Phone: home screen + dock ---------- */
+  @media (max-width: 47.99rem) {
+    .desktop {
+      display: grid;
+      gap: 1.5rem;
+      align-content: start;
+      min-height: auto;
+      padding: 1rem var(--mfm-gutter) 8rem;
+    }
+
+    [data-draggable] {
+      position: static;
+    }
+
+    .welcome {
+      width: 100%;
+    }
+
+    .folder-window {
+      display: none;
+    }
+
+    .icons ul {
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+    }
+
+    .icon {
+      width: 100%;
+    }
+
+    .dock {
+      position: fixed;
+      inset-block-end: 0.75rem;
+      z-index: 20;
+    }
+
+    .dock-app {
+      width: 4.5rem;
+    }
+
+    .dock .icon-label {
+      font-size: 0.6rem;
+    }
+
+    .desktop::before {
+      display: none;
+    }
+
+    /* keep the footer clear of the fixed dock */
+    :global(body) {
+      padding-block-end: 7.5rem;
+    }
   }
 </style>

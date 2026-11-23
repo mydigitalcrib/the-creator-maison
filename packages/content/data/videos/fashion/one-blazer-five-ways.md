@@ -5,6 +5,7 @@ category: fashion
 format: tutorial
 platform: instagram
 duration: 36
+src: /media/skincare-12-days.mp4
 results:
   views: 1270000
   likes: 101600

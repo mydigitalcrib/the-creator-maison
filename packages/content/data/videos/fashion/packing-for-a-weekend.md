@@ -5,6 +5,7 @@ category: fashion
 format: narrator
 platform: tiktok
 duration: 42
+src: /media/black-friday-haul.mp4
 results:
   views: 830000
   likes: 66400

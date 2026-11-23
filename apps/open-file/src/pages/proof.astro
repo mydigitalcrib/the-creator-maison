@@ -1,93 +1,99 @@
 ---
+/** Site A · Proof — the numbers, big; the brands as a table. */
 import { getCollection } from 'astro:content';
 import { formatCompact, loadSite } from '@mfm/content';
 import Site from '../layouts/Site.astro';
 
 const { metrics, clients, categories } = await loadSite(getCollection);
-const categoryTitle = (id: string) => categories.find((c) => c.id === id)?.data.title ?? id;
+const titleOf = (id: string) => categories.find((c) => c.id === id)?.data.title ?? id;
+const anyPlaceholder = [...metrics, ...clients].some((x) => x.data.placeholder);
 ---
 
-<Site title="Proof" description="Numbers and brands behind the work.">
-  <p class="eyebrow">Numbers & brands</p>
-  <h1>Proof</h1>
+<Site title="Proof" description="Numbers and brands.">
+  <header class="page-head wrap">
+    <p class="label label--muted">Numbers & brands</p>
+    <h1 class="display page-title" data-reveal>Proof</h1>
+    <p class="lead">It&apos;s not just numbers, it&apos;s people who stay and watch.</p>
+  </header>
 
-  <section aria-labelledby="numbers-title">
-    <h2 id="numbers-title" class="visually-hidden">Numbers</h2>
+  <section class="wrap" aria-label="Numbers">
     <dl class="metrics">
       {
-        metrics.map((m) => (
-          <div>
-            <dt>{m.data.label}</dt>
-            <dd class="value">
-              {formatCompact(m.data.value)}
+        metrics.map((m, i) => (
+          <div data-reveal style={`--i:${i}`}>
+            <dt class="label">{m.data.label}</dt>
+            <dd class="display metric" data-count={m.data.value} data-suffix={m.data.suffix}>
+              {m.data.value >= 10000 ? formatCompact(m.data.value) : m.data.value}
               {m.data.suffix}
             </dd>
-            <dd class="meta">{m.data.context}</dd>
+            <dd class="label label--muted">{m.data.context}</dd>
           </div>
         ))
       }
     </dl>
   </section>
 
-  <section aria-labelledby="clients-title">
-    <h2 id="clients-title">Brands I&apos;ve worked with</h2>
-    <ul class="clients">
+  <section class="brands wrap" aria-labelledby="brands-title">
+    <h2 id="brands-title" class="display brands-title" data-reveal>Brands I&apos;ve worked with</h2>
+    <dl class="spec label">
       {
         clients.map((c) => (
-          <li>
-            <span class="name">{c.data.name}</span>
-            <span class="meta">{categoryTitle(c.data.category)}</span>
-          </li>
+          <div>
+            <dt>{c.data.name}</dt>
+            <dd>{titleOf(c.data.category)}</dd>
+          </div>
         ))
       }
-    </ul>
+    </dl>
+    {anyPlaceholder && <p class="label label--muted note">Placeholder names and numbers — real ones coming soon.</p>}
   </section>
 </Site>
 
 <style>
-  h1 {
-    margin-block: 0.5rem 2.5rem;
-  }
-
   .metrics {
     display: grid;
-    gap: 2rem 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-    margin-block-end: 4rem;
+    grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--ink);
   }
 
-  .metrics dt {
-    font-family: var(--mfm-font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+  .metrics > div {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.4rem 1.2rem 2rem 0;
+    border-bottom: 1px solid var(--rule);
   }
 
-  .value {
-    font-family: var(--mfm-font-display);
-    font-size: clamp(3rem, 8vw, 5rem);
-    line-height: 1;
-    color: var(--mfm-accent);
+  .metrics > div:nth-child(even) {
+    padding-inline-start: 1.2rem;
+    border-inline-start: 1px solid var(--rule);
   }
 
-  .clients {
-    padding: 0;
-    margin-block-start: 1.25rem;
-    list-style: none;
-    border-top: 1px solid var(--mfm-border);
+  .metric {
+    font-size: clamp(4.5rem, 12vw, 11rem);
   }
 
-  .clients li {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1rem;
-    align-items: baseline;
-    justify-content: space-between;
-    padding-block: 0.9rem;
-    border-bottom: 1px solid var(--mfm-border);
+  .brands {
+    display: grid;
+    gap: 2rem;
+    padding-block: clamp(4rem, 8vw, 7rem);
   }
 
-  .clients .name {
-    font-size: 1.25rem;
+  .brands-title {
+    font-size: clamp(2.6rem, 6vw, 6rem);
+  }
+
+  .note {
+    margin-block-start: -0.5rem;
+  }
+
+  @media (max-width: 47.99rem) {
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+
+    .metrics > div:nth-child(even) {
+      padding-inline-start: 0;
+      border-inline-start: 0;
+    }
   }
 </style>

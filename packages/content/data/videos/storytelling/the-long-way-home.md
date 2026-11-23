@@ -5,6 +5,7 @@ category: storytelling
 format: storytelling
 platform: youtube
 duration: 201
+src: /media/shein-mini-haul.mp4
 results:
   views: 180000
   likes: 14400

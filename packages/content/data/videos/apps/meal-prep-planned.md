@@ -5,6 +5,7 @@ category: apps
 format: narrator
 platform: tiktok
 duration: 40
+src: /media/shein-mini-haul.mp4
 results:
   views: 770000
   likes: 61600

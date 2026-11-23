@@ -1,86 +1,703 @@
 ---
+/**
+ * Site A · home — an editorial "drop" page.
+ * Hero: the name split around a cut-out photo that follows the cursor and lifts off on scroll,
+ * with category tags pinned to the photo. Then a featured "look", the category index
+ * (hover a row to preview its video), a lookbook about-me, the numbers and a brief ticket.
+ */
 import { getCollection } from 'astro:content';
-import { categoryHref, loadSite } from '@mfm/content';
+import { categoryHref, FORMAT_LABELS, formatCompact, loadSite, PLATFORM_LABELS } from '@mfm/content';
+import VideoCard from '../components/VideoCard.astro';
 import Site from '../layouts/Site.astro';
 
-const { profile, categories, videosByCategory } = await loadSite(getCollection);
+const { profile, categories, videos, videosByCategory, metrics, clients } = await loadSite(getCollection);
+const [first, ...rest] = profile.name.split(' ');
+const last = rest.join(' ');
+const heroPhoto = '/media/sinai-collar-cut.webp';
+const aboutPhoto = '/media/sinai-hair-cut.webp';
+
+const count = (id: string) => videosByCategory.get(id)?.length ?? 0;
+const byId = (id: string) => categories.find((c) => c.id === id);
+const hotspots = [
+  { id: 'beauty', x: 30, y: 27 },
+  { id: 'fashion', x: 22, y: 64 },
+  { id: 'storytelling', x: 71, y: 43 },
+]
+  .map((h) => ({ ...h, cat: byId(h.id) }))
+  .filter((h) => h.cat);
+
+// three videos that each use a different clip (featured ones first), so nothing repeats
+const clips = [...new Set(videos.map((v) => v.data.src).filter(Boolean))];
+const featured: typeof videos = [];
+const seenClips = new Set<string>();
+for (const v of [...videos.filter((x) => x.data.featured), ...videos.filter((x) => !x.data.featured)]) {
+  const key = v.data.src ?? v.id;
+  if (featured.length === 3) break;
+  if (seenClips.has(key)) continue;
+  seenClips.add(key);
+  featured.push(v);
+}
+// each category row previews a different clip than the row before it
+const rowPreview = (id: string, i: number) => {
+  const list = videosByCategory.get(id) ?? [];
+  const want = clips[i % Math.max(clips.length, 1)];
+  return (list.find((v) => v.data.src === want) ?? list[0])?.data.src;
+};
+const formats = [...new Set(videos.map((v) => FORMAT_LABELS[v.data.format]))].slice(0, 3).join(', ');
+const platforms = [...new Set(videos.map((v) => PLATFORM_LABELS[v.data.platform]))].join(', ');
 ---
 
 <Site title={profile.name}>
-  <section class="hero" aria-labelledby="hero-title">
-    <p class="eyebrow">{profile.role}</p>
-    <h1 id="hero-title">{profile.name}</h1>
-    <p class="lede">{profile.tagline}</p>
+  <!-- ========== Hero ========== -->
+  <section class="hero" data-hero aria-labelledby="hero-title">
+    <h1 id="hero-title" class="hero-name display">
+      <span class="visually-hidden">{profile.name}</span>
+      <span class="hero-word hero-word--a" aria-hidden="true">{first}</span>
+      <span class="hero-word hero-word--b" aria-hidden="true">{last}</span>
+    </h1>
+
+    <figure class="hero-photo">
+      <img src={heroPhoto} alt={`${first} in a denim jacket, holding its collar`} width="1122" height="1402" fetchpriority="high" />
+      {
+        hotspots.map((h) => (
+          <a class="hotspot" href={categoryHref(h.id)} style={`--x:${h.x}%;--y:${h.y}%`}>
+            <span class="hotspot-dot" aria-hidden="true" />
+            <span class="tag hotspot-tag">
+              <span class="label">{h.cat!.data.title}</span>
+              <span class="label">{count(h.id)} videos ↗</span>
+            </span>
+          </a>
+        ))
+      }
+    </figure>
+
+    <p class="hero-corner hero-corner--tl label">Portfolio — {new Date().getFullYear()}<br />Now booking brand work</p>
+    <p class="hero-corner hero-corner--bl label">{profile.tagline}</p>
+    <p class="hero-corner hero-corner--br label">{videos.length} videos · {categories.length} categories<br />Scroll ↓</p>
   </section>
 
-  <section class="work" aria-labelledby="work-title">
-    <h2 id="work-title">Work</h2>
-    <ol class="category-index">
+  <!-- ========== Featured look ========== -->
+  <section class="look wrap section" aria-labelledby="look-title">
+    <h2 id="look-title" class="display look-title look-title--a" data-reveal>Look 01,<br />the work</h2>
+    <p class="display look-title look-title--b" data-reveal style="--i:1" aria-hidden="true">
+      {videos.length} videos,<br />one creator
+    </p>
+    <ul class="look-grid">
+      {
+        featured.map((v, i) => (
+          <li class={`look-item look-item--${i + 1}`} data-reveal style={`--i:${i + 1}`}>
+            <VideoCard video={v} side={i === 2 ? 'right' : 'left'} />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ========== Category index ========== -->
+  <section class="cats wrap section rule-top" aria-labelledby="cats-title">
+    <div class="cats-head">
+      <h2 id="cats-title" class="label">The categories</h2>
+      <a class="label link" href="/work/#list">See all work as a list →</a>
+    </div>
+    <ol class="cat-rows">
       {
         categories.map((c, i) => (
-          <li>
-            <a href={categoryHref(c.id)}>
-              <span class="meta">{String(i + 1).padStart(2, '0')}</span>
-              <span class="name">{c.data.title}</span>
-              <span class="meta">{videosByCategory.get(c.id)?.length ?? 0} videos</span>
+          <li data-reveal style={`--i:${i % 3}`}>
+            <a class="cat-row" href={categoryHref(c.id)} data-preview={rowPreview(c.id, i)}>
+              <span class="label cat-num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="display cat-name">{c.data.title}</span>
+              <span class="label label--muted cat-count">{count(c.id)} videos</span>
+              <span class="cat-arrow" aria-hidden="true">
+                ↗
+              </span>
             </a>
           </li>
         ))
       }
     </ol>
-    <p><a class="all-work" href="/work/">See all work as a list</a></p>
+  </section>
+
+  <!-- ========== Lookbook: about ========== -->
+  <section class="lookbook wrap section rule-top" aria-labelledby="lb-title">
+    <figure class="lb-photo" data-reveal>
+      <img src={aboutPhoto} alt={`${first} touching her hair, in a denim jacket`} width="1122" height="1402" loading="lazy" />
+    </figure>
+    <div class="lb-info">
+      <p class="label label--muted">Lookbook — about</p>
+      <h2 id="lb-title" class="display lb-title" data-reveal>Meet {first}</h2>
+      <p class="lead" data-reveal style="--i:1">{profile.bio[0]}</p>
+      <dl class="spec label" data-reveal style="--i:2">
+        <div><dt>Name</dt><dd>{profile.name}</dd></div>
+        <div><dt>Makes</dt><dd>{profile.role}</dd></div>
+        <div><dt>Based in</dt><dd>{profile.location}</dd></div>
+        <div><dt>Formats</dt><dd>{formats}</dd></div>
+        <div><dt>Platforms</dt><dd>{platforms}</dd></div>
+        <div><dt>Contact</dt><dd><a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></dd></div>
+      </dl>
+      <a class="label link lb-more" href="/about/">More about me →</a>
+    </div>
+  </section>
+
+  <!-- ========== Numbers ========== -->
+  <section class="numbers wrap section rule-top" aria-labelledby="num-title">
+    <div class="cats-head">
+      <h2 id="num-title" class="label">Proof</h2>
+      <a class="label link" href="/proof/">{clients.length} brands & the numbers →</a>
+    </div>
+    <dl class="num-grid">
+      {
+        metrics.map((m, i) => (
+          <div data-reveal style={`--i:${i}`}>
+            <dt class="label label--muted">{m.data.label}</dt>
+            <dd class="display num" data-count={m.data.value} data-suffix={m.data.suffix}>
+              {m.data.value >= 10000 ? formatCompact(m.data.value) : m.data.value}
+              {m.data.suffix}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <!-- ========== Closing: brief ticket ========== -->
+  <section class="cta" aria-labelledby="cta-title">
+    <h2 id="cta-title" class="display cta-title" data-reveal>Made to<br />stop the<br />scroll.</h2>
+    <div class="cta-row label">
+      <p>Available for brand work — {new Date().getFullYear()}</p>
+      <p>Replies within a few days</p>
+    </div>
+    <a class="ticket" href="/contact/" data-tilt>
+      <span class="ticket-main">
+        <span class="label">Brief ticket · admit one brand</span>
+        <span class="display ticket-title">Send a brief</span>
+        <span class="label ticket-mail">{profile.email}</span>
+      </span>
+      <span class="ticket-stub label" aria-hidden="true">No.<br />001<br />↗</span>
+    </a>
   </section>
 </Site>
 
 <style>
+  /* ---------- Hero ---------- */
   .hero {
-    display: grid;
-    gap: 1rem;
-    padding-block-end: clamp(3rem, 8vw, 6rem);
+    --mx: 0;
+    --my: 0;
+    --p: 0;
+    position: relative;
+    height: 100svh;
+    min-height: 34rem;
+    overflow: hidden;
   }
 
-  .lede {
-    max-width: 34ch;
-    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  .hero-name {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
-  .work {
-    display: grid;
-    gap: 1.5rem;
+  .hero-word {
+    position: absolute;
+    inset-block-end: 13svh;
+    font-size: min(13.5vw, 32svh);
+    line-height: 0.8;
+    transform-origin: 50% 100%;
+    will-change: transform;
   }
 
-  .category-index {
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--mfm-border);
+  .hero-word--a {
+    inset-inline-start: var(--gutter);
+    transform: translateX(calc(var(--p) * -24vw + var(--mx) * -14px)) scaleY(1.32);
   }
 
-  .category-index a {
-    display: grid;
-    grid-template-columns: 3rem 1fr auto;
-    gap: 1rem;
-    align-items: baseline;
-    min-height: var(--mfm-tap);
-    padding-block: 1rem;
-    border-bottom: 1px solid var(--mfm-border);
+  .hero-word--b {
+    inset-inline-end: var(--gutter);
+    transform: translateX(calc(var(--p) * 24vw + var(--mx) * -14px)) scaleY(1.32);
+  }
+
+  .hero-photo {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 44%;
+    z-index: 2;
+    height: 80svh;
+    aspect-ratio: 1122 / 1402;
+    translate: -50% 0;
+    transform: translate(calc(var(--mx) * 18px), calc(var(--my) * 8px + var(--p) * -42svh))
+      rotate(calc(var(--mx) * 1.6deg)) scale(calc(1 + var(--p) * 0.08));
+    opacity: calc(1 - var(--p) * 0.9);
+    will-change: transform;
+  }
+
+  .hero-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: 50% 100%;
+  }
+
+  .hotspot {
+    position: absolute;
+    inset-block-start: var(--y);
+    inset-inline-start: var(--x);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
     text-decoration: none;
+    translate: -0.55rem -50%;
   }
 
-  .category-index .name {
-    font-family: var(--mfm-font-display);
-    font-size: clamp(1.75rem, 5vw, 3rem);
-    line-height: 1;
+  .hotspot-dot {
+    position: relative;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--paper);
+    box-shadow:
+      0 0 0 1px var(--ink),
+      0 0 0 6px rgb(248 247 243 / 0.45);
   }
 
-  .category-index a:hover .name,
-  .category-index a:focus-visible .name {
-    color: var(--mfm-accent);
+  .hotspot-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0.32rem;
+    border-radius: 50%;
+    background: var(--velvet);
   }
 
-  .all-work {
+  .hotspot-tag {
+    opacity: 0;
+    translate: -0.4rem 0;
+    transition:
+      opacity var(--t-base) var(--ease-out),
+      translate var(--t-base) var(--ease-out);
+  }
+
+  .hotspot:hover .hotspot-tag,
+  .hotspot:focus-visible .hotspot-tag {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .hero-corner {
+    position: absolute;
+    z-index: 3;
+    max-width: 22rem;
+  }
+
+  .hero-corner--tl {
+    inset-block-start: 4.6rem;
+    inset-inline-start: var(--gutter);
+    color: var(--muted);
+  }
+
+  .hero-corner--bl {
+    inset-block-end: 1.4rem;
+    inset-inline-start: var(--gutter);
+    max-width: 17rem;
+  }
+
+  .hero-corner--br {
+    inset-block-end: 1.4rem;
+    inset-inline-end: var(--gutter);
+    text-align: right;
+  }
+
+  @media (hover: none) {
+    .hotspot-tag {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  /* ---------- Featured look ---------- */
+  .look {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem var(--gutter);
+  }
+
+  .look-title {
+    font-size: clamp(2.6rem, 6vw, 6rem);
+  }
+
+  .look-title--b {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .look-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+    gap: clamp(1.5rem, 5vw, 6rem);
+    margin: 0;
+    padding: 0 clamp(0rem, 4vw, 4rem);
+    list-style: none;
+  }
+
+  .look-item--1 {
+    margin-block-start: 4rem;
+  }
+
+  .look-item--3 {
+    margin-block-start: 8rem;
+  }
+
+  /* ---------- Category index ---------- */
+  .cats-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block-end: 1.2rem;
+  }
+
+  .cats-head .link {
     display: inline-flex;
     align-items: center;
-    min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
+    min-height: 44px;
+  }
+
+  .cats-head h2 {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .cat-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--ink);
+  }
+
+  .cat-row {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto 2rem;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.9rem 0.6rem;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    transition: color var(--t-fast) var(--ease-out);
+  }
+
+  .cat-name {
+    font-size: clamp(2.8rem, 8.5vw, 8.5rem);
+    transition: translate var(--t-base) var(--ease-out);
+  }
+
+  .cat-arrow {
+    font-size: 1.6rem;
+    opacity: 0;
+    translate: -0.5rem 0.5rem;
+    transition:
+      opacity var(--t-base) var(--ease-out),
+      translate var(--t-base) var(--ease-out);
+  }
+
+  .cat-row:hover {
+    color: var(--velvet);
+  }
+
+  .cat-row:hover .cat-name {
+    translate: 1.2rem 0;
+  }
+
+  .cat-row:hover .cat-arrow {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* ---------- Lookbook ---------- */
+  .lookbook {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 7rem);
+    align-items: end;
+  }
+
+  .lb-photo {
+    background: var(--bg-2);
+  }
+
+  .lb-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .lb-info {
+    display: grid;
+    gap: 1.6rem;
+  }
+
+  .lb-title {
+    font-size: clamp(3.2rem, 8vw, 8rem);
+  }
+
+  .lb-more {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* ---------- Numbers ---------- */
+  .num-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--ink);
+  }
+
+  .num-grid > div {
+    display: grid;
+    gap: 1.2rem;
+    padding: 1.2rem 1rem 0.4rem 0;
+  }
+
+  .num-grid > div + div {
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--rule);
+  }
+
+  .num {
+    font-size: clamp(3.2rem, 7vw, 7.5rem);
+  }
+
+  /* ---------- Closing ---------- */
+  .cta {
+    position: relative;
+    display: grid;
+    gap: 2.4rem;
+    padding: clamp(5rem, 12vw, 10rem) var(--gutter) clamp(9rem, 16vw, 14rem);
+    overflow: hidden;
+    background: var(--blush);
+  }
+
+  .cta-title {
+    font-size: clamp(4rem, 15vw, 15rem);
+    text-align: center;
+  }
+
+  .cta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block-start: 1rem;
+    border-top: 1px solid var(--ink);
+  }
+
+  .ticket {
+    --rx: 0deg;
+    --ry: 0deg;
+    position: absolute;
+    inset-block-end: clamp(1.5rem, 4vw, 3rem);
+    inset-inline-start: 50%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    width: min(30rem, calc(100% - 2 * var(--gutter)));
+    color: var(--ink);
+    text-decoration: none;
+    background: var(--paper);
+    box-shadow: 0 18px 40px -18px rgb(17 17 17 / 0.45);
+    translate: -50% 0;
+    transform: perspective(900px) rotate(-6deg) rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform var(--t-base) var(--ease-out);
+  }
+
+  .ticket:hover {
+    color: var(--velvet);
+  }
+
+  .ticket-main {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1.1rem 1.3rem 1.2rem;
+  }
+
+  .ticket-title {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+  }
+
+  .ticket-mail {
+    color: var(--muted);
+  }
+
+  .ticket-stub {
+    display: grid;
+    place-content: center;
+    padding: 1rem 1.2rem;
+    border-inline-start: 2px dashed rgb(17 17 17 / 0.35);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ---------- Phones / small tablets ---------- */
+  @media (max-width: 47.99rem) {
+    .hero {
+      height: 92svh;
+    }
+
+    .hero-word {
+      font-size: 25vw;
+    }
+
+    .hero-word--a {
+      inset-block-end: auto;
+      inset-block-start: 21svh;
+    }
+
+    .hero-word--b {
+      inset-block-end: 17svh;
+    }
+
+    .hero-photo {
+      height: 72svh;
+    }
+
+    .hero-corner--tl {
+      inset-block-start: 6.8rem;
+    }
+
+    .hero-corner--bl {
+      max-width: 11rem;
+    }
+
+    .look {
+      grid-template-columns: 1fr;
+    }
+
+    .look-title--b {
+      justify-self: start;
+      text-align: left;
+    }
+
+    .look-grid {
+      grid-template-columns: 1fr;
+      padding: 0 8%;
+    }
+
+    .look-item--1,
+    .look-item--3 {
+      margin-block-start: 0;
+    }
+
+    .look-item--2 {
+      margin-inline-start: 18%;
+    }
+
+    .cat-row {
+      grid-template-columns: 2.2rem 1fr auto;
+    }
+
+    .cat-arrow {
+      display: none;
+    }
+
+    .lookbook {
+      grid-template-columns: 1fr;
+    }
+
+    .num-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .num-grid > div:nth-child(3) {
+      padding-inline-start: 0;
+      border-inline-start: 0;
+    }
+
+    .cta-row {
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-word--a,
+    .hero-word--b {
+      transform: scaleY(1.32);
+    }
+
+    .hero-photo {
+      transform: none;
+      opacity: 1;
+    }
+  }
+</style>
+
+<style>
+  /* portrait tablets: the stacked hero (name above and below the photo) */
+  @media (min-width: 48rem) and (max-width: 64rem) and (orientation: portrait) {
+    .hero {
+      height: 88svh;
+    }
+
+    .hero-word {
+      font-size: 24vw;
+    }
+
+    .hero-word--a {
+      inset-block-end: auto;
+      inset-block-start: 15svh;
+    }
+
+    .hero-word--b {
+      inset-block-end: 12svh;
+    }
+
+    .hero-photo {
+      inset-inline-start: 50%;
+      height: 66svh;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .hero-photo {
+      inset-inline-start: 50%;
+    }
+  }
+</style>
+
+<style>
+  /* narrow screens: the name sits in front of the photo, like a magazine cover */
+  @media (max-width: 47.99rem), (min-width: 48rem) and (max-width: 64rem) and (orientation: portrait) {
+    .hero-name {
+      z-index: 3;
+    }
+
+    .hero-corner--tl {
+      display: none;
+    }
+  }
+</style>
+
+<style>
+  /* phones: lift the photo so the tagline sits below it, on its own */
+  @media (max-width: 47.99rem) {
+    .hero-photo {
+      inset-block-end: 4.6rem;
+      height: 64svh;
+    }
+
+    .hero-word--b {
+      inset-block-end: 22svh;
+    }
+
+    .hero-corner--bl {
+      max-width: none;
+      inset-inline-end: var(--gutter);
+    }
+
+    .hero-corner--br {
+      display: none;
+    }
   }
 </style>

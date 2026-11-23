@@ -2,9 +2,11 @@
 
 > **TL;DR:** Edit your content once in `packages/content/data/`, and all 3 sites update.
 
+**Live (Site A):** https://mydigitalcrib.github.io/the-creator-maison/ — rebuilt and published by GitHub Pages on every push to `main` (see `.github/workflows/pages.yml`).
+
 | Site | Style | Local address |
 |---|---|---|
-| **A** | Open File: tabbed folders, editorial | http://localhost:4321 |
+| **A** | Editorial drop: split name, cut-out photo, product-style tags | http://localhost:4321 |
 | **B** | Pop Zine: collage, stickers, loud | http://localhost:4322 |
 | **C** | Desktop Diary: pink computer desktop | http://localhost:4323 |
 

@@ -1,6 +1,39 @@
-[
-  { "id": "views", "label": "Total views", "value": 12400000, "context": "Placeholder: across all brand videos", "order": 1, "placeholder": true },
-  { "id": "videos", "label": "Videos made", "value": 180, "suffix": "+", "context": "Placeholder: since starting UGC", "order": 2, "placeholder": true },
-  { "id": "engagement", "label": "Avg. engagement", "value": 8.4, "suffix": "%", "context": "Placeholder: likes + comments + shares ÷ views", "order": 3, "placeholder": true },
-  { "id": "brands", "label": "Brands", "value": 40, "suffix": "+", "context": "Placeholder: across six categories", "order": 4, "placeholder": true }
-]
+{
+  "items": [
+    {
+      "id": "views",
+      "label": "Total views",
+      "value": 12400000,
+      "context": "Placeholder: across all brand videos",
+      "order": 1,
+      "placeholder": true
+    },
+    {
+      "id": "videos",
+      "label": "Videos made",
+      "value": 180,
+      "suffix": "+",
+      "context": "Placeholder: since starting UGC",
+      "order": 2,
+      "placeholder": true
+    },
+    {
+      "id": "engagement",
+      "label": "Avg. engagement",
+      "value": 8.4,
+      "suffix": "%",
+      "context": "Placeholder: likes + comments + shares ÷ views",
+      "order": 3,
+      "placeholder": true
+    },
+    {
+      "id": "brands",
+      "label": "Brands",
+      "value": 40,
+      "suffix": "+",
+      "context": "Placeholder: across six categories",
+      "order": 4,
+      "placeholder": true
+    }
+  ]
+}

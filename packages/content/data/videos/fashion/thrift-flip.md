@@ -5,6 +5,7 @@ category: fashion
 format: engagement
 platform: tiktok
 duration: 25
+src: /media/shein-mini-haul.mp4
 results:
   views: 1490000
   likes: 119200

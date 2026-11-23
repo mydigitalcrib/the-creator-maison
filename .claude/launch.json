@@ -4,19 +4,34 @@
     {
       "name": "A · Open File",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview", "-w", "@mfm/open-file"],
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "-w",
+        "@mfm/open-file"
+      ],
       "port": 4321
     },
     {
       "name": "B · Pop Zine",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview", "-w", "@mfm/pop-zine"],
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "-w",
+        "@mfm/pop-zine"
+      ],
       "port": 4322
     },
     {
       "name": "C · Desktop Diary",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview", "-w", "@mfm/desktop-diary"],
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "-w",
+        "@mfm/desktop-diary"
+      ],
       "port": 4323
     }
   ]

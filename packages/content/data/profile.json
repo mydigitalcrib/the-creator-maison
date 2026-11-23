@@ -1,9 +1,11 @@
 {
   "main": {
-    "name": "Michelle",
+    "name": "Sinai Rivodó",
     "role": "UGC & short-form video creator",
     "tagline": "Scroll-stopping brand videos that feel like a friend's recommendation.",
     "location": "Placeholder City",
+    "portrait": "/media/portrait.webp",
+    "gallery": ["/media/sinai-front.webp", "/media/sinai-collar.webp", "/media/sinai-hair.webp", "/media/sinai-sitting.webp"],
     "email": "hello@example.com",
     "bio": [
       "Placeholder bio. Replace with a few lines about who you are, what you make, and who you make it for.",

@@ -1,0 +1,64 @@
+---
+/** Pixel-art desktop icons (decorative: the link text names the item). */
+interface Props {
+  kind: 'folder' | 'note' | 'chart' | 'mail' | 'list';
+  tone?: 'raspberry' | 'lilac' | 'cream';
+}
+const { kind, tone = 'raspberry' } = Astro.props;
+const fills = { raspberry: '#b8214a', lilac: '#cdb8f5', cream: '#fff8f1' } as const;
+const fill = fills[tone];
+---
+
+<svg class="pixel-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false" shape-rendering="crispEdges">
+  {
+    kind === 'folder' && (
+      <>
+        <path d="M3 8h10l2 2h14v17H3z" fill={fill} stroke="#111" stroke-width="2" />
+        <path d="M3 13h26" stroke="#111" stroke-width="2" />
+        <rect x="5" y="15" width="6" height="2" fill="#fff8f1" opacity="0.6" />
+      </>
+    )
+  }
+  {
+    kind === 'note' && (
+      <>
+        <path d="M7 3h14l5 5v21H7z" fill="#fff8f1" stroke="#111" stroke-width="2" />
+        <path d="M11 13h11M11 17h11M11 21h7" stroke={fills.raspberry} stroke-width="2" />
+      </>
+    )
+  }
+  {
+    kind === 'chart' && (
+      <>
+        <rect x="3" y="4" width="26" height="24" fill="#fff8f1" stroke="#111" stroke-width="2" />
+        <rect x="8" y="17" width="4" height="7" fill={fills.raspberry} />
+        <rect x="14" y="12" width="4" height="12" fill={fills.lilac} stroke="#111" stroke-width="1" />
+        <rect x="20" y="8" width="4" height="16" fill={fills.raspberry} />
+      </>
+    )
+  }
+  {
+    kind === 'mail' && (
+      <>
+        <rect x="3" y="7" width="26" height="18" fill={fills.lilac} stroke="#111" stroke-width="2" />
+        <path d="M4 8l12 9 12-9" fill="none" stroke="#111" stroke-width="2" />
+      </>
+    )
+  }
+  {
+    kind === 'list' && (
+      <>
+        <rect x="4" y="4" width="24" height="24" fill="#fff8f1" stroke="#111" stroke-width="2" />
+        <path d="M9 10h2M14 10h9M9 16h2M14 16h9M9 22h2M14 22h9" stroke="#111" stroke-width="2" />
+      </>
+    )
+  }
+</svg>
+
+<style>
+  .pixel-icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    image-rendering: pixelated;
+  }
+</style>

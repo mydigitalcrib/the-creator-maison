@@ -24,6 +24,12 @@
   --mfm-video-bg: var(--hot-pink);
   --mfm-video-text: var(--ink);
 
+  /* Placeholder video art */
+  --mfm-ph-a: var(--lime);
+  --mfm-ph-b: var(--bubblegum);
+  --mfm-ph-c: var(--hot-pink);
+  --mfm-ph-d: var(--cherry);
+
   --mfm-font-display: var(--font-bagel-fat-one);
   --mfm-font-script: var(--font-shrikhand);
   --mfm-font-mono: var(--font-dm-mono);

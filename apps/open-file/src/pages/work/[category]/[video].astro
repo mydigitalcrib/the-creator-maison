@@ -1,4 +1,5 @@
 ---
+/** Site A · one video, lookbook style: the video on one side, the specs and the brief on the other. */
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import {
   categoryHref,
@@ -7,6 +8,7 @@ import {
   formatDuration,
   loadSite,
   PLATFORM_LABELS,
+  seedFor,
   videoHref,
   videoSlug,
 } from '@mfm/content';
@@ -26,149 +28,116 @@ const { Content } = await render(entry);
 const { categories, videosByCategory } = await loadSite(getCollection);
 
 const category = categories.find((c) => c.id === entry.data.category)!;
+const ci = categories.indexOf(category);
 const siblings = videosByCategory.get(category.id) ?? [];
 const index = siblings.findIndex((s) => s.id === entry.id);
-const prev = siblings[index - 1];
-const next = siblings[index + 1];
-const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
-const v = entry.data;
+const before = siblings[index - 1];
+const after = siblings[index + 1];
+const nextCategory = categories[ci + 1];
 
-const results = [
-  ['Views', v.results?.views],
-  ['Likes', v.results?.likes],
-  ['Shares', v.results?.shares],
-  ['Saves', v.results?.saves],
-].filter((r): r is [string, number] => typeof r[1] === 'number');
+const prev = before
+  ? { href: videoHref(before), label: before.data.title }
+  : { href: categoryHref(category.id), label: category.data.title };
+const next = after
+  ? { href: videoHref(after), label: after.data.title }
+  : nextCategory
+    ? { href: categoryHref(nextCategory.id), label: nextCategory.data.title }
+    : { href: '/proof/', label: 'Proof' };
+
+const v = entry.data;
+const aspect = category.data.length === 'long' ? 'landscape' : 'portrait';
+const specs = [
+  ['Brand', v.brand],
+  ['Category', category.data.title],
+  ['Format', FORMAT_LABELS[v.format]],
+  ['Platform', PLATFORM_LABELS[v.platform]],
+  ['Length', v.duration ? formatDuration(v.duration) : undefined],
+  ['Views', v.results?.views !== undefined ? formatCompact(v.results.views) : undefined],
+  ['Likes', v.results?.likes !== undefined ? formatCompact(v.results.likes) : undefined],
+  ['Shares', v.results?.shares !== undefined ? formatCompact(v.results.shares) : undefined],
+  ['Saves', v.results?.saves !== undefined ? formatCompact(v.results.saves) : undefined],
+].filter(([, value]) => value);
 ---
 
-<Site title={`${v.title} · ${v.brand}`} description={`${FORMAT_LABELS[v.format]} video for ${v.brand}.`}>
-  <p class="eyebrow">
-    <a href="/work/">All work</a> / <a href={categoryHref(category.id)}>{category.data.title}</a>
-  </p>
-  <h1>{v.title}</h1>
-
-  <div class:list={['layout', `layout--${aspect}`]}>
-    <VideoPlayer
-      title={`${v.title}, for ${v.brand}`}
-      src={v.src}
-      poster={v.poster?.src}
-      captions={v.captions}
-      aspect={aspect}
-    />
-
-    <div class="details">
-      <dl class="facts">
-        <div><dt>Brand</dt><dd>{v.brand}</dd></div>
-        <div><dt>Format</dt><dd>{FORMAT_LABELS[v.format]}</dd></div>
-        <div><dt>Platform</dt><dd>{PLATFORM_LABELS[v.platform]}</dd></div>
-        {v.duration && <div><dt>Length</dt><dd>{formatDuration(v.duration)}</dd></div>}
-      </dl>
-
-      {
-        results.length > 0 && (
-          <section aria-labelledby="results-title">
-            <h2 id="results-title">Results</h2>
-            <dl class="results">
-              {results.map(([label, value]) => (
-                <div>
-                  <dt>{label}</dt>
-                  <dd>{formatCompact(value)}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        )
-      }
-
-      <section aria-labelledby="brief-title" class="brief">
-        <h2 id="brief-title">The brief</h2>
-        <Content />
-      </section>
+<Site title={v.title} description={`${v.title}, a video for ${v.brand}.`}>
+  <article class:list={['vp wrap', `vp--${aspect}`]}>
+    <div class="vp-media">
+      <VideoPlayer title={`${v.title}, for ${v.brand}`} src={v.src} aspect={aspect} seed={seedFor(entry.id)} />
     </div>
-  </div>
-
-  <nav class="pager" aria-label={`More ${category.data.title} videos`}>
-    {prev ? <a href={videoHref(prev)} rel="prev">← {prev.data.title}</a> : <span />}
-    {next && <a href={videoHref(next)} rel="next">{next.data.title} →</a>}
-  </nav>
+    <div class="vp-info">
+      <p class="label">
+        <a class="link" href="/work/">All work</a> / <a class="link" href={categoryHref(category.id)}>{category.data.title}</a>
+      </p>
+      <h1 class="display vp-title" data-reveal>{v.title}</h1>
+      <dl class="spec label" data-reveal style="--i:1">
+        {
+          specs.map(([k, value]) => (
+            <div>
+              <dt>{k}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <h2 class="label label--muted">The brief</h2>
+      <div class="lead vp-brief"><Content /></div>
+      <nav class="pager label" aria-label="More videos">
+        <a href={prev.href} rel="prev">← {prev.label}</a>
+        <a href={next.href} rel="next">{next.label} →</a>
+      </nav>
+    </div>
+  </article>
 </Site>
 
 <style>
-  .eyebrow a {
-    color: inherit;
-  }
-
-  h1 {
-    margin-block: 0.5rem 2rem;
-    font-size: clamp(2.5rem, 8vw, 6rem);
-  }
-
-  .layout {
+  .vp {
     display: grid;
-    gap: 2.5rem;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(2rem, 6vw, 7rem);
+    padding-block: clamp(6rem, 12vw, 8rem) clamp(4rem, 8vw, 6rem);
   }
 
-  .layout--portrait {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  .vp--landscape {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   }
 
-  .layout--portrait :global(.mfm-video) {
-    max-width: 26rem;
+  .vp-media {
+    position: sticky;
+    inset-block-start: 5rem;
+    max-width: 30rem;
   }
 
-  .details {
+  .vp--landscape .vp-media {
+    max-width: none;
+  }
+
+  .vp-info {
     display: grid;
-    gap: 2rem;
-    align-content: start;
+    gap: 1.6rem;
   }
 
-  dl {
-    display: grid;
-    gap: 0.75rem 1.5rem;
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  .vp-title {
+    font-size: clamp(3rem, 6.5vw, 6.8rem);
   }
 
-  dt {
-    font-family: var(--mfm-font-mono);
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--mfm-muted);
-  }
-
-  dd {
-    font-size: 1.15rem;
-  }
-
-  .results dd {
-    font-family: var(--mfm-font-display);
-    font-size: 2.5rem;
-    line-height: 1;
-  }
-
-  .details h2 {
-    font-size: 1.75rem;
-    margin-block-end: 0.75rem;
-  }
-
-  .brief {
-    max-width: 52ch;
+  .vp-brief :global(p) {
+    margin: 0 0 0.8em;
   }
 
   .pager {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: space-between;
-    margin-block-start: 3rem;
-    padding-block-start: 1.5rem;
-    border-top: 1px solid var(--mfm-border);
+    margin-block-start: 1rem;
   }
 
-  .pager a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
+  @media (max-width: 47.99rem) {
+    .vp,
+    .vp--landscape {
+      grid-template-columns: 1fr;
+    }
+
+    .vp-media {
+      position: static;
+      max-width: 22rem;
+    }
   }
 </style>

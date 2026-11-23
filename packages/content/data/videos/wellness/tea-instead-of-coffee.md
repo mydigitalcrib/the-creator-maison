@@ -5,6 +5,7 @@ category: wellness
 format: storytelling
 platform: tiktok
 duration: 38
+src: /media/black-friday-haul.mp4
 results:
   views: 1050000
   likes: 84000

@@ -5,6 +5,7 @@ category: storytelling
 format: day-in-the-life
 platform: youtube
 duration: 214
+src: /media/skincare-12-days.mp4
 results:
   views: 330000
   likes: 26400

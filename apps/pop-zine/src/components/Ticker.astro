@@ -1,0 +1,137 @@
+---
+/**
+ * Scrolling ticker band. Decorative (the words exist elsewhere on the page), so
+ * the moving text is hidden from screen readers. WCAG 2.2.2: anything that moves
+ * for more than 5 seconds needs a pause button, so there is one.
+ * Reduced motion: the band doesn't move at all.
+ */
+interface Props {
+  items: string[];
+  tone?: 'lime' | 'pink' | 'ink';
+  /** Seconds for one loop. */
+  speed?: number;
+  label?: string;
+}
+const { items, tone = 'lime', speed = 28, label = 'scrolling text' } = Astro.props;
+const run = items.flatMap((item) => [item, '✱']);
+---
+
+<zine-ticker class:list={['ticker', `ticker--${tone}`]} style={`--speed:${speed}s`}>
+  <div class="ticker-window" aria-hidden="true">
+    <div class="ticker-track">
+      {[0, 1].map(() => <span class="ticker-run">{run.map((w) => <span>{w}</span>)}</span>)}
+    </div>
+  </div>
+  <button type="button" class="ticker-pause" aria-pressed="false" aria-label={`Pause ${label}`}>
+    <span aria-hidden="true" data-icon>❚❚</span>
+  </button>
+</zine-ticker>
+
+<style>
+  .ticker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-block: 3px solid var(--ink);
+    overflow: hidden;
+  }
+
+  .ticker--lime {
+    background: var(--lime);
+    color: var(--ink);
+  }
+
+  .ticker--pink {
+    background: var(--hot-pink);
+    color: var(--ink);
+  }
+
+  .ticker--ink {
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  .ticker-window {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    animation: ticker var(--speed) linear infinite;
+  }
+
+  .ticker:hover .ticker-track,
+  .ticker[data-paused] .ticker-track {
+    animation-play-state: paused;
+  }
+
+  .ticker-run {
+    display: flex;
+    gap: 1.25rem;
+    padding-inline-end: 1.25rem;
+    padding-block: 0.6rem;
+    font-family: var(--mfm-font-display);
+    font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+    line-height: 1;
+    white-space: nowrap;
+    text-transform: lowercase;
+  }
+
+  .ticker-pause {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: var(--mfm-tap);
+    height: var(--mfm-tap);
+    margin-inline: 0.4rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+    font-size: 0.7rem;
+  }
+
+  .ticker-pause[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  .ticker--ink .ticker-pause[aria-pressed='true'] {
+    background: var(--cream);
+    color: var(--ink);
+  }
+
+  @keyframes ticker {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
+
+    .ticker-pause {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  class ZineTicker extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector<HTMLButtonElement>('.ticker-pause');
+      const icon = button?.querySelector('[data-icon]');
+      button?.addEventListener('click', () => {
+        const paused = button.getAttribute('aria-pressed') !== 'true';
+        button.setAttribute('aria-pressed', String(paused));
+        this.toggleAttribute('data-paused', paused);
+        if (icon) icon.textContent = paused ? '▶' : '❚❚';
+      });
+    }
+  }
+  if (!customElements.get('zine-ticker')) customElements.define('zine-ticker', ZineTicker);
+</script>

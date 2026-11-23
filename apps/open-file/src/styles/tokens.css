@@ -1,28 +1,56 @@
 /*
- * Site A · Open File — design tokens
- * Editorial archive: paper, blush, raspberry, oxblood, ink.
- * Contrast (checked): Raspberry on Paper 5.5:1 · Muted on Paper 7.2:1 · White on Raspberry 6.3:1
+ * Site A — editorial "drop" look: warm off-white, black condensed headlines, tiny mono labels,
+ * cut-out photos, one dusty-pink closing section, a deep velvet red for small accents.
+ * Contrast on #efede8: Ink 17:1 · Muted 5.0:1 · Velvet 7.4:1. On Blush #e7bdb7: Ink 12:1.
  */
 :root {
-  --paper: #f5efe7;
-  --blush: #f3c6d3;
-  --raspberry: #b8214a;
-  --oxblood: #4e0d1c;
-  --ink: #1b1416;
-  --lime: #ddf36b; /* highlighter only: always behind dark text */
+  --bg: #efede8;
+  --bg-2: #e6e3dc;
+  --paper: #f8f7f3;
+  --ink: #111111;
+  --ink-2: #33322f;
+  --muted: #64625d;
+  --rule: rgb(17 17 17 / 0.16);
+  --velvet: #8c1c22;
+  --blush: #e7bdb7;
 
-  --mfm-bg: var(--paper);
-  --mfm-surface: var(--blush);
+  /* legacy names some shared components still read */
+  --raspberry: var(--velvet);
+  --paper-light: var(--paper);
+
+  --mfm-bg: var(--bg);
+  --mfm-surface: var(--paper);
   --mfm-text: var(--ink);
-  --mfm-muted: #5c4a4f;
-  --mfm-accent: var(--raspberry);
-  --mfm-accent-contrast: #ffffff;
+  --mfm-muted: var(--muted);
+  --mfm-accent: var(--ink);
+  --mfm-accent-contrast: var(--bg);
   --mfm-border: var(--ink);
-  --mfm-focus: var(--oxblood);
-  --mfm-radius: 0.25rem;
-  --mfm-video-bg: var(--oxblood);
+  --mfm-focus: var(--velvet);
+  --mfm-radius: 0;
+  --mfm-video-bg: #1c1b1a;
   --mfm-video-text: var(--paper);
+  --mfm-video-radius: 0;
 
-  --mfm-font-display: var(--font-instrument-serif);
-  --mfm-font-mono: var(--font-dm-mono);
+  /* placeholder video art */
+  --mfm-ph-a: #d8d2c8;
+  --mfm-ph-b: var(--paper);
+  --mfm-ph-c: #2b2a28;
+  --mfm-ph-d: var(--blush);
+
+  /* 3 typefaces: condensed display · mono labels · text */
+  --font-display: var(--font-anton);
+  --font-mono: var(--font-dm-mono);
+  --font-text: var(--font-inter-tight-text);
+  --mfm-font-body: var(--font-text);
+  --mfm-font-display: var(--font-display);
+  --mfm-font-mono: var(--font-mono);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.16, 0.84, 0.24, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 180ms;
+  --t-base: 320ms;
+  --t-slow: 700ms;
+
+  --gutter: clamp(1rem, 2.4vw, 2.25rem);
 }

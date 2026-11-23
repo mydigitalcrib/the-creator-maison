@@ -5,6 +5,7 @@ category: beauty
 format: narrator
 platform: tiktok
 duration: 32
+src: /media/skincare-12-days.mp4
 results:
   views: 1840000
   likes: 147200

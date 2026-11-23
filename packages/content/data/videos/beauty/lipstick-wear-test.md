@@ -5,6 +5,7 @@ category: beauty
 format: engagement
 platform: tiktok
 duration: 27
+src: /media/black-friday-haul.mp4
 results:
   views: 2310000
   likes: 184800

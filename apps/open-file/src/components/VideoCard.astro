@@ -1,0 +1,66 @@
+---
+/**
+ * A video with a product-style tag pinned to its corner (title → its page, brand · views).
+ */
+import { formatCompact, seedFor, videoHref, type Video } from '@mfm/content';
+import VideoPlayer from '@mfm/ui/components/VideoPlayer.astro';
+
+interface Props {
+  video: Video;
+  aspect?: 'portrait' | 'landscape';
+  /** Tag on the left (default) or right side. */
+  side?: 'left' | 'right';
+  class?: string;
+  style?: string;
+}
+
+const { video, aspect = 'portrait', side = 'left', class: className, style } = Astro.props;
+const v = video.data;
+const views = v.results?.views;
+---
+
+<figure class:list={['vcard', `vcard--${side}`, className]} style={style}>
+  <VideoPlayer title={`${v.title}, for ${v.brand}`} src={v.src} aspect={aspect} seed={seedFor(video.id)} />
+  <figcaption class="tag vcard-tag">
+    <a class="label vcard-title" href={videoHref(video)}>{v.title} <span aria-hidden="true">↗</span></a>
+    <span class="label">{v.brand}{views ? ` · ${formatCompact(views)} views` : ''}</span>
+  </figcaption>
+</figure>
+
+<style>
+  .vcard {
+    position: relative;
+  }
+
+  .vcard-tag {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 1rem;
+    inset-inline-start: -0.7rem;
+    max-width: calc(100% + 0.4rem);
+    white-space: normal;
+    transition: translate var(--t-base) var(--ease-out);
+  }
+
+  .vcard--right .vcard-tag {
+    inset-inline: auto -0.7rem;
+  }
+
+  .vcard:hover .vcard-tag {
+    translate: 0 -0.25rem;
+  }
+
+  .vcard-title {
+    text-decoration: none;
+  }
+
+  .vcard-title::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .vcard-title:hover {
+    color: var(--velvet);
+  }
+</style>

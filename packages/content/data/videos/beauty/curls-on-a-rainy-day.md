@@ -5,6 +5,7 @@ category: beauty
 format: storytelling
 platform: instagram
 duration: 39
+src: /media/shein-mini-haul.mp4
 results:
   views: 960000
   likes: 76800

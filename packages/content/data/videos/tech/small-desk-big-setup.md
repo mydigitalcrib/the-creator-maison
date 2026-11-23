@@ -5,6 +5,7 @@ category: tech
 format: tutorial
 platform: tiktok
 duration: 34
+src: /media/shein-mini-haul.mp4
 results:
   views: 1180000
   likes: 94400

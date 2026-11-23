@@ -5,6 +5,7 @@ category: tech
 format: unboxing
 platform: tiktok
 duration: 23
+src: /media/black-friday-haul.mp4
 results:
   views: 890000
   likes: 71200

@@ -5,6 +5,7 @@ category: apps
 format: tutorial
 platform: tiktok
 duration: 48
+src: /media/skincare-12-days.mp4
 results:
   views: 560000
   likes: 44800

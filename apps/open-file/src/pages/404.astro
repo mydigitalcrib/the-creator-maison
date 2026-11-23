@@ -1,40 +1,47 @@
 ---
+/** Site A · 404 */
 import Site from '../layouts/Site.astro';
 ---
 
 <Site title="Page not found" description="This page doesn't exist.">
-  <p class="eyebrow">Error 404</p>
-  <h1>Page not found</h1>
-  <p class="intro">This page isn&apos;t here. Try one of these instead:</p>
-  <ul class="links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/work/">All work</a></li>
-    <li><a href="/contact/">Contact</a></li>
-  </ul>
+  <section class="lost wrap">
+    <p class="display lost-code" aria-hidden="true">404</p>
+    <h1 class="label lost-title">Page not found</h1>
+    <p class="lead">This page isn&apos;t part of the drop. Try one of these:</p>
+    <ul class="label links">
+      <li><a class="link" href="/">Home</a></li>
+      <li><a class="link" href="/work/">All work</a></li>
+      <li><a class="link" href="/contact/">Contact</a></li>
+    </ul>
+  </section>
 </Site>
 
 <style>
-  h1 {
-    margin-block: 0.5rem 1.5rem;
+  .lost {
+    display: grid;
+    gap: 1.4rem;
+    padding-block: clamp(7rem, 14vw, 10rem) clamp(4rem, 8vw, 7rem);
   }
 
-  .intro {
-    font-size: 1.15rem;
+  .lost-code {
+    font-size: clamp(8rem, 34vw, 30rem);
+  }
+
+  .lost-title {
+    font-size: 0.9rem;
   }
 
   .links {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
+    gap: 0 1.6rem;
+    margin: 0;
     padding: 0;
-    margin-block-start: 1rem;
     list-style: none;
   }
 
   .links a {
     display: inline-flex;
     align-items: center;
-    min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
+    min-height: 44px;
   }
 </style>

@@ -1,0 +1,301 @@
+---
+/**
+ * Site B signature move: a wheel of category cards around a "spin me" sticker.
+ *
+ * - Every card is a normal link (works without JavaScript, Tab goes through them)
+ * - Spin / ← / → buttons and arrow keys turn the wheel; the card on top is "picked"
+ * - Focusing a card turns the wheel so that card comes to the top
+ * - Phones (< 768px): the wheel becomes a swipeable row of cards
+ * - Reduced motion: the wheel jumps instead of spinning
+ */
+import { categoryHref, seedFor, type Category } from '@mfm/content';
+
+interface Props {
+  categories: Category[];
+  counts: Map<string, number>;
+}
+const { categories, counts } = Astro.props;
+const step = 360 / categories.length;
+---
+
+<zine-wheel class="wheel" style={`--step:${step}deg`}>
+  <div class="wheel-stage">
+    <ul class="wheel-ring">
+      {
+        categories.map((c, i) => (
+          <li style={`--i:${i};--seed:${seedFor(c.id)}`}>
+            <a class="wheel-card" href={categoryHref(c.id)} data-index={i}>
+              <span class="card-art" aria-hidden="true" />
+              <span class="card-title">{c.data.title}</span>
+              <span class="card-count">{counts.get(c.id) ?? 0} videos</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <button type="button" class="wheel-spin" data-dir="1" hidden>
+      <span>spin</span><span>me!</span>
+    </button>
+  </div>
+
+  <div class="wheel-controls" hidden>
+    <button type="button" class="wheel-arrow" data-dir="-1" aria-label="Previous category">←</button>
+    <a class="wheel-open" href={categoryHref(categories[0]!.id)}>
+      Open{' '}<span data-picked-label>{categories[0]!.data.title}</span>{' '}→
+    </a>
+    <button type="button" class="wheel-arrow" data-dir="1" aria-label="Next category">→</button>
+  </div>
+  <p class="visually-hidden" role="status" aria-live="polite" data-status></p>
+</zine-wheel>
+
+<style>
+  .wheel {
+    --size: min(40rem, 92vw);
+    --radius: calc(var(--size) / 2 - 5.5rem);
+    --turn: 0deg;
+    display: grid;
+    gap: 1.5rem;
+    justify-items: center;
+  }
+
+  .wheel-stage {
+    position: relative;
+    width: var(--size);
+    aspect-ratio: 1;
+  }
+
+  /* dashed orbit */
+  .wheel-stage::before {
+    content: '';
+    position: absolute;
+    inset: 4.5rem;
+    border: 3px dashed var(--ink);
+    border-radius: 50%;
+    opacity: 0.35;
+  }
+
+  .wheel-ring {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transform: rotate(var(--turn));
+    transition: transform 0.7s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  .wheel-ring li {
+    --angle: calc(var(--i) * var(--step));
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--radius)));
+  }
+
+  .wheel-card {
+    position: absolute;
+    display: grid;
+    align-content: end;
+    gap: 0.1rem;
+    width: 8.5rem;
+    height: 10.5rem;
+    padding: 0.6rem;
+    translate: -50% -50%;
+    /* keep cards upright while the ring turns */
+    rotate: calc(-1 * (var(--angle) + var(--turn)) + (var(--seed) - 500) * 0.012deg);
+    border: 3px solid var(--ink);
+    border-radius: 0.9rem;
+    background: var(--cream);
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: 5px 5px 0 var(--ink);
+    transition:
+      rotate 0.7s cubic-bezier(0.3, 1.4, 0.5, 1),
+      scale 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .card-art {
+    position: absolute;
+    inset: 0.45rem 0.45rem 3.2rem;
+    border-radius: 0.5rem;
+    background:
+      radial-gradient(circle at 30% 30%, var(--lime) 0 16%, transparent 50%),
+      linear-gradient(calc(var(--seed) * 0.36deg), var(--hot-pink), var(--bubblegum));
+  }
+
+  .card-title {
+    position: relative;
+    font-family: var(--mfm-font-display);
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .card-count {
+    position: relative;
+    font-family: var(--mfm-font-mono);
+    font-size: 0.7rem;
+  }
+
+  .wheel-card:hover,
+  .wheel-card:focus-visible,
+  .wheel-card[data-picked] {
+    scale: 1.12;
+    box-shadow: 7px 7px 0 var(--hot-pink);
+  }
+
+  .wheel-card[data-picked] {
+    background: var(--lime);
+  }
+
+  .wheel-spin {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    width: 9.5rem;
+    aspect-ratio: 1.35;
+    translate: -50% -50%;
+    rotate: -8deg;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--lime);
+    font-family: var(--mfm-font-script);
+    font-size: 1.5rem;
+    line-height: 0.95;
+    box-shadow: 5px 5px 0 var(--hot-pink);
+    transition: rotate 0.3s ease;
+  }
+
+  .wheel-spin:hover {
+    rotate: 6deg;
+  }
+
+  .wheel-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .wheel-controls[hidden],
+  .wheel-spin[hidden] {
+    display: none;
+  }
+
+  .wheel-arrow,
+  .wheel-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--mfm-tap);
+    min-height: var(--mfm-tap);
+    padding: 0 1rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--mfm-font-mono);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .wheel-open {
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  /* ---------- Phone: swipeable row instead of a wheel ---------- */
+  @media (max-width: 47.99rem) {
+    .wheel-stage {
+      width: 100%;
+      aspect-ratio: auto;
+    }
+
+    .wheel-stage::before,
+    .wheel-spin,
+    .wheel-controls {
+      display: none !important;
+    }
+
+    .wheel-ring {
+      position: static;
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 1rem 0.5rem 1.25rem;
+      transform: none;
+    }
+
+    .wheel-ring li {
+      position: static;
+      flex: 0 0 auto;
+      transform: none;
+      scroll-snap-align: center;
+    }
+
+    .wheel-card {
+      position: relative;
+      translate: none;
+      rotate: calc((var(--seed) - 500) * 0.01deg);
+    }
+  }
+</style>
+
+<script>
+  class ZineWheel extends HTMLElement {
+    #index = 0;
+
+    connectedCallback() {
+      const cards = [...this.querySelectorAll<HTMLAnchorElement>('.wheel-card')];
+      const count = cards.length;
+      if (!count) return;
+      const step = 360 / count;
+      const open = this.querySelector<HTMLAnchorElement>('.wheel-open');
+      const picked = this.querySelector<HTMLElement>('[data-picked-label]');
+      const status = this.querySelector<HTMLElement>('[data-status]');
+      let turn = 0;
+
+      const pick = (index: number, announce = true) => {
+        // Turn the shortest way round so the chosen card ends up on top.
+        const target = ((index % count) + count) % count;
+        let delta = (this.#index - target) * step;
+        delta = ((((delta + 180) % 360) + 360) % 360) - 180;
+        turn += delta;
+        this.#index = target;
+        this.style.setProperty('--turn', `${turn}deg`);
+        cards.forEach((c, i) => c.toggleAttribute('data-picked', i === target));
+        const card = cards[target]!;
+        const title = card.querySelector('.card-title')?.textContent ?? '';
+        if (open) open.href = card.href;
+        if (picked) picked.textContent = title;
+        if (announce && status) status.textContent = `Picked ${title}`;
+      };
+
+      this.querySelectorAll<HTMLElement>('[hidden]').forEach((el) => {
+        if (el.matches('.wheel-spin, .wheel-controls')) el.hidden = false;
+      });
+
+      this.querySelectorAll<HTMLButtonElement>('button[data-dir]').forEach((b) =>
+        b.addEventListener('click', () => pick(this.#index + Number(b.dataset.dir))),
+      );
+
+      cards.forEach((card, i) => {
+        card.addEventListener('focus', () => pick(i, false));
+        card.addEventListener('keydown', (e) => {
+          if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+          e.preventDefault();
+          pick(i + (e.key === 'ArrowRight' ? 1 : -1));
+          cards[this.#index]?.focus();
+        });
+      });
+
+      pick(0, false);
+    }
+  }
+  if (!customElements.get('zine-wheel')) customElements.define('zine-wheel', ZineWheel);
+</script>

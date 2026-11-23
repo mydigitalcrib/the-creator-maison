@@ -15,10 +15,12 @@ import SkipLink from '@mfm/ui/components/SkipLink.astro';
 interface Props {
   title: string;
   description?: string;
+  /** Home page: render the desktop itself instead of wrapping the page in one window. */
+  bare?: boolean;
 }
 
 const { profile } = await loadSite(getCollection);
-const { title, description = profile.tagline } = Astro.props;
+const { title, description = profile.tagline, bare = false } = Astro.props;
 
 const SITE = { letter: 'C', name: 'Desktop Diary' };
 const nav = [
@@ -59,16 +61,26 @@ const windowTitle = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/
       </nav>
     </header>
 
-    <main id="main" tabindex="-1">
-      <div class="window">
-        <div class="titlebar" aria-hidden="true">
-          <span class="dots"><i></i><i></i><i></i></span>
-          <span class="name">{windowTitle}</span>
-        </div>
-        <div class="window-body">
+    <main id="main" tabindex="-1" class:list={[{ 'main--bare': bare }]}>
+      {
+        bare ? (
           <slot />
-        </div>
-      </div>
+        ) : (
+          <div class="window">
+            <div class="titlebar" aria-hidden="true">
+              <span class="dots">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span class="name">{windowTitle}</span>
+            </div>
+            <div class="window-body">
+              <slot />
+            </div>
+          </div>
+        )
+      }
     </main>
 
     <footer class="taskbar">
@@ -144,6 +156,11 @@ const windowTitle = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/
 
   main:focus {
     outline: none;
+  }
+
+  .main--bare {
+    width: 100%;
+    padding: 0;
   }
 
   .window {

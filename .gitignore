@@ -21,3 +21,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 screenshots/
+
+# shared media is copied into each site at build time
+apps/*/public/media/
+# Claude Code: local-only settings and third-party skills
+.claude/settings.local.json
+.claude/skills/

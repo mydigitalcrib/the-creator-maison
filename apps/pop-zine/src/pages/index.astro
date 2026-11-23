@@ -1,80 +1,269 @@
 ---
+/**
+ * Site B · Pop Zine — home.
+ * A cut-and-paste collage hero, a ticker band, and the category wheel.
+ */
 import { getCollection } from 'astro:content';
-import { categoryHref, loadSite } from '@mfm/content';
+import { FORMAT_LABELS, FORMATS, loadSite } from '@mfm/content';
+import CategoryWheel from '../components/CategoryWheel.astro';
+import Ticker from '../components/Ticker.astro';
 import Site from '../layouts/Site.astro';
 
-const { profile, categories, videosByCategory } = await loadSite(getCollection);
+const { profile, categories, videosByCategory, videos } = await loadSite(getCollection);
+const counts = new Map(categories.map((c) => [c.id, videosByCategory.get(c.id)?.length ?? 0]));
 ---
 
 <Site title={profile.name}>
   <section class="hero" aria-labelledby="hero-title">
     <p class="eyebrow">{profile.role}</p>
-    <h1 id="hero-title">{profile.name}</h1>
-    <p class="lede">{profile.tagline}</p>
+    <h1 id="hero-title" class="hero-name">{profile.name}</h1>
+
+    {
+      profile.portrait ? (
+        <div class="portrait has-photo">
+          <img src={profile.portrait} alt={`Portrait of ${profile.name}`} width="655" height="795" />
+          <span class="tape tape--a" aria-hidden="true" />
+        </div>
+      ) : (
+        <div class="portrait" role="img" aria-label="Portrait placeholder: your photo goes here">
+          <span class="tape tape--a" aria-hidden="true" />
+          <span class="portrait-label" aria-hidden="true">
+            your photo here
+          </span>
+        </div>
+      )
+    }
+
+    <span class="sticker sticker--star" aria-hidden="true"><span>UGC<br />creator</span></span>
+    <span class="sticker sticker--oval" aria-hidden="true">hi there!</span>
+
+    <div class="note">
+      <span class="tape tape--b" aria-hidden="true"></span>
+      <p>{profile.tagline}</p>
+    </div>
   </section>
 
-  <section class="work" aria-labelledby="work-title">
-    <h2 id="work-title">Work</h2>
-    <ol class="category-index">
-      {
-        categories.map((c, i) => (
-          <li>
-            <a href={categoryHref(c.id)}>
-              <span class="meta">{String(i + 1).padStart(2, '0')}</span>
-              <span class="name">{c.data.title}</span>
-              <span class="meta">{videosByCategory.get(c.id)?.length ?? 0} videos</span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-    <p><a class="all-work" href="/work/">See all work as a list</a></p>
+  <div class="ticker-tilt">
+    <Ticker items={FORMATS.map((f) => FORMAT_LABELS[f])} tone="ink" label="list of video formats" />
+  </div>
+
+  <section class="vibes" aria-labelledby="vibes-title">
+    <div class="vibes-head">
+      <h2 id="vibes-title">Pick a vibe</h2>
+      <p class="meta">{categories.length} categories · {videos.length} videos</p>
+    </div>
+    <CategoryWheel categories={categories} counts={counts} />
+    <p class="all-work-wrap"><a class="all-work" href="/work/">See all work as a list</a></p>
   </section>
 </Site>
 
 <style>
+  /* ---------- Collage hero ---------- */
   .hero {
+    position: relative;
     display: grid;
-    gap: 1rem;
-    padding-block-end: clamp(3rem, 8vw, 6rem);
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-areas:
+      'eyebrow portrait'
+      'name portrait'
+      'note portrait';
+    gap: 1rem 2rem;
+    align-items: start;
+    padding-block-end: clamp(3rem, 7vw, 5rem);
   }
 
-  .lede {
-    max-width: 34ch;
-    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  .hero .eyebrow {
+    grid-area: eyebrow;
   }
 
-  .work {
+  .hero-name {
+    grid-area: name;
+    position: relative;
+    z-index: 2;
+    font-size: clamp(3.5rem, 10.5vw, 10.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    overflow-wrap: normal;
+  }
+
+  .portrait {
+    grid-area: portrait;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: end center;
+    width: 100%;
+    max-width: 26rem;
+    aspect-ratio: 4 / 5;
+    justify-self: end;
+    margin-block-start: 1rem;
+    padding: 1.25rem;
+    border: 4px solid var(--ink);
+    border-radius: 46% 54% 42% 58% / 52% 40% 60% 48%;
+    background:
+      radial-gradient(circle at 52% 36%, var(--cream) 0 12%, transparent 12.5%),
+      radial-gradient(ellipse 32% 26% at 52% 80%, var(--cream) 0 99%, transparent 100%),
+      radial-gradient(circle at 80% 20%, var(--lime) 0 14%, transparent 40%),
+      linear-gradient(200deg, var(--bubblegum), var(--hot-pink));
+    box-shadow: 10px 10px 0 var(--ink);
+    rotate: 3deg;
+  }
+
+  .portrait.has-photo {
+    padding: 0;
+  }
+
+  .portrait.has-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 20%;
+    border-radius: inherit;
+  }
+
+  .portrait-label {
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: var(--mfm-font-mono);
+    font-size: 0.75rem;
+  }
+
+  .tape {
+    position: absolute;
+    width: 7rem;
+    height: 1.8rem;
+    background: rgb(214 245 90 / 0.85);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  }
+
+  .tape--a {
+    inset-block-start: -0.6rem;
+    inset-inline-start: 38%;
+    rotate: -6deg;
+  }
+
+  .tape--b {
+    inset-block-start: -0.9rem;
+    inset-inline-start: 1.5rem;
+    rotate: 4deg;
+    background: rgb(255 154 203 / 0.9);
+  }
+
+  .sticker {
+    position: absolute;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .sticker--star {
+    inset-block-start: 1.5rem;
+    inset-inline-end: min(22rem, 34%);
+    width: 7.5rem;
+    aspect-ratio: 1;
+    background: var(--lime);
+    font-family: var(--mfm-font-display);
+    font-size: 1.05rem;
+    line-height: 1;
+    clip-path: polygon(
+      50% 0%, 61% 18%, 82% 10%, 80% 32%, 100% 40%, 85% 56%, 96% 76%, 74% 78%,
+      68% 100%, 50% 87%, 32% 100%, 26% 78%, 4% 76%, 15% 56%, 0% 40%, 20% 32%,
+      18% 10%, 39% 18%
+    );
+    animation: wobble 6s ease-in-out infinite;
+  }
+
+  .sticker--oval {
+    inset-block-end: clamp(4rem, 9vw, 6rem);
+    inset-inline-end: -0.5rem;
+    padding: 0.9rem 1.4rem;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: var(--cream);
+    font-family: var(--mfm-font-script);
+    font-size: 1.4rem;
+    rotate: -10deg;
+    box-shadow: 4px 4px 0 var(--hot-pink);
+  }
+
+  .note {
+    grid-area: note;
+    position: relative;
+    max-width: 30rem;
+    padding: 1.6rem 1.5rem 1.3rem;
+    background: #fffdf8;
+    box-shadow: 0 0.6rem 1.2rem -0.6rem rgb(22 18 20 / 0.35);
+    rotate: -1.5deg;
+    /* torn bottom edge */
+    clip-path: polygon(
+      0 0, 100% 0, 100% 92%, 94% 100%, 86% 93%, 77% 100%, 68% 94%, 58% 100%,
+      49% 93%, 40% 100%, 30% 94%, 21% 100%, 12% 93%, 4% 100%, 0 94%
+    );
+  }
+
+  .note p {
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    line-height: 1.35;
+  }
+
+  @keyframes wobble {
+    50% {
+      rotate: 12deg;
+      scale: 1.05;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .hero {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'eyebrow' 'name' 'portrait' 'note';
+    }
+
+    .portrait {
+      justify-self: center;
+      max-width: 17rem;
+    }
+
+    .sticker--star {
+      inset-block-start: auto;
+      inset-block-end: 11rem;
+      inset-inline-end: 0;
+      width: 6rem;
+      font-size: 0.9rem;
+    }
+
+    .sticker--oval {
+      display: none;
+    }
+  }
+
+  .ticker-tilt {
+    rotate: -1.2deg;
+  }
+
+  /* ---------- Wheel section ---------- */
+  .vibes {
     display: grid;
     gap: 1.5rem;
+    padding-block-start: clamp(3rem, 7vw, 5rem);
   }
 
-  .category-index {
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--mfm-border);
-  }
-
-  .category-index a {
-    display: grid;
-    grid-template-columns: 3rem 1fr auto;
-    gap: 1rem;
+  .vibes-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
     align-items: baseline;
-    min-height: var(--mfm-tap);
-    padding-block: 1rem;
-    border-bottom: 1px solid var(--mfm-border);
-    text-decoration: none;
+    justify-content: space-between;
   }
 
-  .category-index .name {
-    font-family: var(--mfm-font-display);
-    font-size: clamp(1.75rem, 5vw, 3rem);
-    line-height: 1;
-  }
-
-  .category-index a:hover .name,
-  .category-index a:focus-visible .name {
-    color: var(--mfm-accent);
+  .all-work-wrap {
+    text-align: center;
   }
 
   .all-work {

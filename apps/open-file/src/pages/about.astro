@@ -1,49 +1,122 @@
 ---
+/** Site A · About — lookbook: a cut-out portrait, the bio, the specs, two more looks. */
 import { getCollection } from 'astro:content';
-import { loadSite } from '@mfm/content';
+import { FORMAT_LABELS, loadSite, PLATFORM_LABELS } from '@mfm/content';
 import Site from '../layouts/Site.astro';
 
-const { profile } = await loadSite(getCollection);
+const { profile, videos, categories } = await loadSite(getCollection);
+const firstName = profile.name.split(' ')[0];
+const formats = [...new Set(videos.map((v) => FORMAT_LABELS[v.data.format]))].join(', ');
+const platforms = [...new Set(videos.map((v) => PLATFORM_LABELS[v.data.platform]))].join(', ');
+const looks = [
+  { src: '/media/sinai-sitting-cut.webp', alt: `${firstName} sitting, one knee up`, note: 'Look 02 — on set' },
+  { src: '/media/sinai-front-cut.webp', alt: `${firstName} standing, hand in pocket`, note: 'Look 03 — ready to film' },
+];
 ---
 
-<Site title="About" description={`About ${profile.name}: ${profile.role}.`}>
-  <p class="eyebrow">{profile.role} · {profile.location}</p>
-  <h1>About</h1>
-  <div class="bio">
-    {profile.bio.map((p) => <p>{p}</p>)}
-  </div>
-  <h2>Find me</h2>
-  <ul class="socials">
-    {profile.socials.map((s) => <li><a href={s.url} rel="me noopener">{s.label}</a></li>)}
-  </ul>
+<Site title="About" description={`About ${profile.name}.`}>
+  <header class="page-head wrap">
+    <p class="label label--muted">Lookbook — about</p>
+    <h1 class="display page-title" data-reveal>About</h1>
+  </header>
+
+  <section class="about wrap" aria-label="Bio">
+    <figure class="about-photo" data-reveal>
+      <img src="/media/sinai-collar-cut.webp" alt={`${firstName} in a denim jacket`} width="1122" height="1402" />
+      <figcaption class="tag about-tag">
+        <span class="label">{profile.name}</span>
+        <span class="label">{profile.role}</span>
+      </figcaption>
+    </figure>
+    <div class="about-text">
+      {profile.bio.map((p, i) => <p class="lead" data-reveal style={`--i:${i}`}>{p}</p>)}
+      <dl class="spec label" data-reveal style="--i:2">
+        <div><dt>Based in</dt><dd>{profile.location}</dd></div>
+        <div><dt>Categories</dt><dd>{categories.map((c) => c.data.title).join(', ')}</dd></div>
+        <div><dt>Formats</dt><dd>{formats}</dd></div>
+        <div><dt>Platforms</dt><dd>{platforms}</dd></div>
+        <div><dt>Email</dt><dd><a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></dd></div>
+      </dl>
+      <a class="label link more" href="/work/">See the work →</a>
+    </div>
+  </section>
+
+  <section class="looks wrap" aria-label="More looks">
+    {
+      looks.map((l, i) => (
+        <figure class="look" data-reveal style={`--i:${i}`}>
+          <img src={l.src} alt={l.alt} width="1122" height="1402" loading="lazy" />
+          <figcaption class="label label--muted">{l.note}</figcaption>
+        </figure>
+      ))
+    }
+  </section>
 </Site>
 
 <style>
-  h1 {
-    margin-block: 0.5rem 2rem;
-  }
-
-  .bio {
+  .about {
     display: grid;
-    gap: 1rem;
-    max-width: 52ch;
-    font-size: 1.2rem;
-    margin-block-end: 3rem;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 7rem);
+    align-items: end;
+    padding-block-end: clamp(4rem, 8vw, 7rem);
   }
 
-  .socials {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    padding: 0;
-    margin-block-start: 1rem;
-    list-style: none;
+  .about-photo {
+    position: relative;
+    background: var(--bg-2);
   }
 
-  .socials a {
+  .about-photo img,
+  .look img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .about-tag {
+    position: absolute;
+    inset-block-start: 1.2rem;
+    inset-inline-end: -0.8rem;
+  }
+
+  .about-text {
+    display: grid;
+    gap: 1.4rem;
+  }
+
+  .more {
+    justify-self: start;
     display: inline-flex;
     align-items: center;
-    min-height: var(--mfm-tap);
-    font-family: var(--mfm-font-mono);
+    min-height: 44px;
+  }
+
+  .looks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gutter);
+    padding-block: 2rem clamp(4rem, 8vw, 7rem);
+    border-top: 1px solid var(--rule);
+  }
+
+  .look {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .look:nth-child(2) {
+    margin-block-start: 6rem;
+  }
+
+  @media (max-width: 47.99rem) {
+    .about,
+    .looks {
+      grid-template-columns: 1fr;
+    }
+
+    .look:nth-child(2) {
+      margin-block-start: 0;
+    }
   }
 </style>

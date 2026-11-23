@@ -5,6 +5,7 @@ category: tech
 format: review
 platform: youtube
 duration: 57
+src: /media/skincare-12-days.mp4
 results:
   views: 410000
   likes: 32800

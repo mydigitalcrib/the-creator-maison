@@ -1,4 +1,5 @@
 ---
+/** Site A · Contact — a big "write back", the details, and the brief form on a paper card. */
 import { getCollection } from 'astro:content';
 import { loadSite } from '@mfm/content';
 import ContactForm from '@mfm/ui/components/ContactForm.astro';
@@ -8,23 +9,163 @@ const { profile } = await loadSite(getCollection);
 ---
 
 <Site title="Contact" description={`Send ${profile.name} a brief.`}>
-  <p class="eyebrow">Send a brief</p>
-  <h1>Let&apos;s work together</h1>
-  <p class="intro">
-    Tell me about your brand and what you need. Prefer email? Write to{' '}
-    <a href={`mailto:${profile.email}`}>{profile.email}</a>.
-  </p>
-  <ContactForm />
+  <header class="page-head wrap">
+    <p class="label label--muted">Send a brief</p>
+    <h1 class="display page-title" data-reveal>Write back.</h1>
+  </header>
+
+  <section class="contact wrap" aria-label="Contact">
+    <div class="contact-info">
+      <p class="lead">
+        Tell me about your brand, what you&apos;d like to make and when. I read every message and reply within a
+        few days.
+      </p>
+      <dl class="spec label">
+        <div><dt>Email</dt><dd><a class="link" href={`mailto:${profile.email}`}>{profile.email}</a></dd></div>
+        {
+          profile.socials.map((s) => (
+            <div>
+              <dt>{s.label}</dt>
+              <dd>
+                <a class="link" href={s.url} rel="me noopener">
+                  Follow ↗
+                </a>
+              </dd>
+            </div>
+          ))
+        }
+        <div><dt>Based in</dt><dd>{profile.location}</dd></div>
+      </dl>
+    </div>
+    <div class="form-card" data-reveal>
+      <p class="label form-card-head"><span>Brief ticket · admit one brand</span><span aria-hidden="true">No. 001</span></p>
+      <ContactForm class="brief-form" />
+    </div>
+  </section>
 </Site>
 
 <style>
-  h1 {
-    margin-block: 0.5rem 1.5rem;
+  .contact {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 6vw, 7rem);
+    align-items: start;
+    padding-block-end: clamp(4rem, 8vw, 7rem);
   }
 
-  .intro {
-    max-width: 48ch;
-    font-size: 1.15rem;
-    margin-block-end: 2.5rem;
+  .contact-info {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .form-card {
+    padding: clamp(1.2rem, 3vw, 2.2rem);
+    background: var(--paper);
+    box-shadow: 0 24px 50px -30px rgb(17 17 17 / 0.45);
+  }
+
+  .form-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block-end: 1rem;
+    margin-block-end: 1.4rem;
+    border-bottom: 2px dashed rgb(17 17 17 / 0.3);
+  }
+
+  .form-card :global(.brief-form) {
+    gap: 1.2rem;
+    max-width: none;
+  }
+
+  .form-card :global(.brief-form :is(label, legend, .mfm-form__note)) {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .form-card :global(.brief-form :is(input:not([type='checkbox']), select, textarea)) {
+    border: 0;
+    border-bottom: 1px solid var(--ink);
+    border-radius: 0;
+    background: transparent;
+    padding-inline: 0;
+    font: inherit;
+    font-size: 1.05rem;
+  }
+
+  .form-card :global(.brief-form textarea) {
+    min-height: 7rem;
+    border: 1px solid var(--rule);
+    padding: 0.6rem;
+  }
+
+  .form-card :global(.brief-form .mfm-form__choices) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .form-card :global(.brief-form .mfm-form__choices legend) {
+    width: 100%;
+    margin-block-end: 0.4rem;
+    padding: 0;
+  }
+
+  .form-card :global(.brief-form .mfm-form__check) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.4rem;
+    padding: 0 0.8rem;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .form-card :global(.brief-form .mfm-form__check:has(input:checked)) {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .form-card :global(.brief-form .mfm-form__check input) {
+    accent-color: var(--velvet);
+  }
+
+  .form-card :global(.brief-form .mfm-form__submit) {
+    justify-self: stretch;
+    min-height: 3.4rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease-out);
+  }
+
+  .form-card :global(.brief-form .mfm-form__submit:hover) {
+    background: var(--velvet);
+  }
+
+  @media (max-width: 47.99rem) {
+    .contact {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

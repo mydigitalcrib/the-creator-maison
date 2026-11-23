@@ -5,6 +5,7 @@ category: storytelling
 format: storytelling
 platform: youtube
 duration: 188
+src: /media/black-friday-haul.mp4
 results:
   views: 240000
   likes: 19200

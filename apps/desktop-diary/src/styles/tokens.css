@@ -22,6 +22,12 @@
   --mfm-video-bg: var(--pixel);
   --mfm-video-text: var(--cream);
 
+  /* Placeholder video art */
+  --mfm-ph-a: var(--lilac);
+  --mfm-ph-b: var(--cream);
+  --mfm-ph-c: var(--raspberry);
+  --mfm-ph-d: var(--powder);
+
   --mfm-font-display: var(--font-instrument-serif);
   --mfm-font-system: var(--font-silkscreen);
   --mfm-font-mono: var(--font-dm-mono);

@@ -14,6 +14,21 @@ import type { SchemaContext } from 'astro/content/config';
 /** Path from any app folder (`apps/<site>/`) to the shared data folder. */
 const DATA = '../../packages/content/data';
 
+/**
+ * List files are stored as `{ "items": [...] }` (a plain top-level array works too).
+ */
+const items = (text: string) => {
+  const data = JSON.parse(text);
+  return (Array.isArray(data) ? data : data.items) as Array<Record<string, unknown>>;
+};
+
+/**
+ * An optional field that also accepts an empty form field ("" or null) as "not set".
+ * (Content editors often leave those behind when a box is cleared.)
+ */
+const blank = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === '' || v === null ? undefined : v), schema.optional());
+
 // ---------------------------------------------------------------------------
 // Vocabularies
 // ---------------------------------------------------------------------------
@@ -64,6 +79,10 @@ export const profile = {
     email: z.email(),
     bio: z.array(z.string()).min(1),
     socials: z.array(z.object({ label: z.string(), url: z.url() })),
+    /** Portrait photo URL (e.g. /media/portrait.webp). Empty = drawn placeholder. */
+    portrait: blank(z.string()),
+    /** Extra photos (URLs) used around the sites, e.g. polaroids. */
+    gallery: z.array(z.string()).default([]),
     /** True while this is placeholder text that still needs replacing. */
     placeholder: z.boolean().default(false),
   }),
@@ -71,7 +90,7 @@ export const profile = {
 
 /** Work categories (the folders / tabs / wheel slices / desktop icons). */
 export const categories = {
-  loader: file(`${DATA}/categories.json`),
+  loader: file(`${DATA}/categories.json`, { parser: items }),
   schema: z.object({
     title: z.string(),
     order: z.number().int(),
@@ -92,19 +111,19 @@ export const videos = {
       format: z.enum(FORMATS),
       platform: z.enum(PLATFORMS),
       /** Length in seconds. */
-      duration: z.number().int().positive().optional(),
+      duration: blank(z.number().int().positive()),
       poster: image().optional(),
       /** Video file URL (or path in an app's /public). Empty = placeholder frame. */
-      src: z.string().optional(),
+      src: blank(z.string()),
       /** WebVTT captions file URL. */
-      captions: z.string().optional(),
+      captions: blank(z.string()),
       results: z
         .object({
-          views: z.number().int().nonnegative().optional(),
-          likes: z.number().int().nonnegative().optional(),
-          shares: z.number().int().nonnegative().optional(),
-          saves: z.number().int().nonnegative().optional(),
-          note: z.string().optional(),
+          views: blank(z.number().int().nonnegative()),
+          likes: blank(z.number().int().nonnegative()),
+          shares: blank(z.number().int().nonnegative()),
+          saves: blank(z.number().int().nonnegative()),
+          note: blank(z.string()),
         })
         .optional(),
       order: z.number().int().default(0),
@@ -115,7 +134,7 @@ export const videos = {
 
 /** Brands you've worked with (only list ones you're allowed to name). */
 export const clients = {
-  loader: file(`${DATA}/clients.json`),
+  loader: file(`${DATA}/clients.json`, { parser: items }),
   schema: z.object({
     name: z.string(),
     category: z.string(),
@@ -126,7 +145,7 @@ export const clients = {
 
 /** Headline numbers for the Proof page. */
 export const metrics = {
-  loader: file(`${DATA}/metrics.json`),
+  loader: file(`${DATA}/metrics.json`, { parser: items }),
   schema: z.object({
     label: z.string(),
     value: z.number().nonnegative(),
@@ -148,6 +167,19 @@ export const categoryHref = (categoryId: string): string => `/work/${categoryId}
 
 export const videoHref = (video: { id: string; data: { category: string } }): string =>
   `/work/${video.data.category}/${videoSlug(video.id)}/`;
+
+/**
+ * A stable number (0–999) from any id. Used to give each placeholder its own
+ * art: the same video always gets the same look.
+ */
+export const seedFor = (id: string): number => {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h) % 1000;
+};
 
 const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 /** 5627045 → "5.6M" */

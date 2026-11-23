@@ -1,72 +1,131 @@
 ---
-/** The plain list of all work: always one click away from every page. */
+/**
+ * Site A · All work — the index: every category (h2) and its videos as rows.
+ * Hover a row to see the video next to the cursor. Also the plain list (#list).
+ */
 import { getCollection } from 'astro:content';
-import { categoryHref, FORMAT_LABELS, formatDuration, loadSite, videoHref } from '@mfm/content';
+import { categoryHref, FORMAT_LABELS, formatCompact, loadSite, videoHref } from '@mfm/content';
 import Site from '../../layouts/Site.astro';
 
-const { categories, videosByCategory, videos } = await loadSite(getCollection);
+const { categories, videos, videosByCategory } = await loadSite(getCollection);
 ---
 
 <Site title="All work" description={`All ${videos.length} videos, by category.`}>
-  <p class="eyebrow">{videos.length} videos · {categories.length} categories</p>
-  <h1>All work</h1>
+  <header class="page-head wrap">
+    <p class="label label--muted">Index — {categories.length} categories · {videos.length} videos</p>
+    <h1 class="display page-title" data-reveal>All work</h1>
+  </header>
 
-  {
-    categories.map((c) => (
-      <section class="group" aria-labelledby={`cat-${c.id}`}>
-        <h2 id={`cat-${c.id}`}>
-          <a href={categoryHref(c.id)}>{c.data.title}</a>
-        </h2>
-        <ul>
-          {(videosByCategory.get(c.id) ?? []).map((v) => (
-            <li>
-              <a href={videoHref(v)}>{v.data.title}</a>
-              <span class="meta">
-                {v.data.brand} · {FORMAT_LABELS[v.data.format]}
-                {v.data.duration && <> · {formatDuration(v.data.duration)}</>}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    ))
-  }
+  <div class="index wrap" id="list">
+    {
+      categories.map((c, i) => (
+        <section class="wi" aria-labelledby={`cat-${c.id}`} data-reveal>
+          <div class="wi-head">
+            <span class="label">{String(i + 1).padStart(2, '0')}</span>
+            <h2 id={`cat-${c.id}`} class="display wi-title">
+              <a href={categoryHref(c.id)}>{c.data.title}</a>
+            </h2>
+            <p class="label label--muted wi-blurb">{c.data.blurb}</p>
+          </div>
+          <ol class="wi-list">
+            {(videosByCategory.get(c.id) ?? []).map((v) => (
+              <li>
+                <a class="wi-row" href={videoHref(v)} data-preview={v.data.src}>
+                  <span class="wi-name">{v.data.title}</span>
+                  <span class="label label--muted">{v.data.brand}</span>
+                  <span class="label label--muted wi-format">{FORMAT_LABELS[v.data.format]}</span>
+                  <span class="label">{v.data.results?.views ? `${formatCompact(v.data.results.views)} views` : ''}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
 </Site>
 
 <style>
-  h1 {
-    margin-block: 0.5rem 2rem;
+  .index {
+    padding-block-end: clamp(4rem, 9vw, 8rem);
   }
 
-  .group {
+  .wi {
     display: grid;
-    gap: 0.75rem;
-    padding-block: 1.5rem;
-    border-top: 1px solid var(--mfm-border);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 1.2rem var(--gutter);
+    padding-block: 1.6rem 2.4rem;
+    border-top: 1px solid var(--ink);
   }
 
-  .group h2 a {
+  .wi-head {
+    display: grid;
+    align-content: start;
+    gap: 0.8rem;
+  }
+
+  .wi-title {
+    font-size: clamp(2.8rem, 6.5vw, 6.5rem);
+  }
+
+  .wi-title a {
     text-decoration: none;
   }
 
-  ul {
-    display: grid;
-    gap: 0.25rem;
+  .wi-title a:hover {
+    color: var(--velvet);
+  }
+
+  .wi-blurb {
+    max-width: 26rem;
+  }
+
+  .wi-list {
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  li {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1rem;
+  .wi-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr) 6rem;
     align-items: baseline;
+    gap: 1rem;
+    min-height: 44px;
+    padding-block: 0.85rem;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    transition:
+      color var(--t-fast) var(--ease-out),
+      padding var(--t-base) var(--ease-out);
   }
 
-  li a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--mfm-tap);
-    font-size: 1.1rem;
+  .wi-row > :last-child {
+    text-align: right;
+  }
+
+  .wi-name {
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  .wi-row:hover {
+    padding-inline-start: 0.8rem;
+    color: var(--velvet);
+  }
+
+  @media (max-width: 47.99rem) {
+    .wi {
+      grid-template-columns: 1fr;
+    }
+
+    .wi-row {
+      grid-template-columns: 1fr auto;
+    }
+
+    .wi-row > :nth-child(2),
+    .wi-format {
+      display: none;
+    }
   }
 </style>
