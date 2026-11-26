@@ -123,6 +123,12 @@ export const IndexPanel = memo(function IndexPanel({ active, stacked }: PanelPro
           box.classList.remove('is-on');
           video.pause();
         };
+        // once the panel goes, unload the film too (nothing keeps playing or lingering off screen)
+        const unload = () => {
+          leave();
+          video.removeAttribute('src');
+          video.load();
+        };
         row.addEventListener('pointerenter', enter);
         row.addEventListener('pointermove', move);
         row.addEventListener('pointerleave', leave);
@@ -130,7 +136,7 @@ export const IndexPanel = memo(function IndexPanel({ active, stacked }: PanelPro
           row.removeEventListener('pointerenter', enter);
           row.removeEventListener('pointermove', move);
           row.removeEventListener('pointerleave', leave);
-          leave();
+          unload();
         };
       });
       return () => offs.forEach((off) => off());

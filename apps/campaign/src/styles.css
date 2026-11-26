@@ -260,11 +260,12 @@ video {
 .h-glow {
   position: absolute;
   z-index: 0;
-  left: 50%;
+  /* centred with margins, not a translate: GSAP moves this box and would fold a translate into its own x */
+  inset-inline: 0;
+  margin-inline: auto;
   bottom: -20svh;
   width: min(70vw, 110svh);
   height: 120svh;
-  translate: -50% 0;
   transform-origin: 50% 100%;
   background: radial-gradient(closest-side, rgb(6 32 22 / 0.7), rgb(10 51 35 / 0.42) 45%, rgb(10 51 35 / 0) 100%);
   pointer-events: none;
@@ -320,10 +321,13 @@ video {
   position: absolute;
   z-index: 3;
   bottom: 0;
-  left: 50%;
-  height: min(92svh, 118vw);
-  aspect-ratio: 600 / 720;
-  translate: -50% 0;
+  /* centred with margins, not a translate: GSAP moves this box and folds a translate into its own
+     x (at some screen sizes that lost the centring and put her over the chapter cards) */
+  inset-inline: 0;
+  margin-inline: auto;
+  --model-h: min(92svh, 118vw);
+  height: var(--model-h);
+  width: calc(var(--model-h) * 600 / 720);
   transform-origin: 50% 100%;
   will-change: transform;
 }
@@ -624,7 +628,7 @@ video {
   }
 
   .h-model {
-    height: 72svh;
+    --model-h: 72svh;
   }
 
   .h-corner--tl,
@@ -1254,14 +1258,19 @@ button {
   scale: 0.85;
   rotate: 2deg;
   pointer-events: none;
+  /* hidden for real once faded (some browsers put their own video buttons over a transparent video) */
+  visibility: hidden;
   transition:
     opacity 0.3s var(--ease-out),
-    scale 0.3s var(--ease-out);
+    scale 0.3s var(--ease-out),
+    visibility 0s linear 0.3s;
 }
 
 .cursor-preview.is-on {
   opacity: 1;
   scale: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .cursor-preview video {

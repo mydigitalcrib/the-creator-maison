@@ -271,9 +271,11 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
           const at = (p: number) => p * U;
           const vw = (n: number) => () => window.innerWidth * n;
           const mx = desktop ? 0.22 : 0.06;
+          /** The scene's width (the window without its scrollbar): she's centred in this. */
+          const sceneW = () => root.current?.clientWidth || window.innerWidth;
           /** Slide her sideways (dir −1 left, +1 right), but never past the edge of the screen. */
           const side = (dir: number, amount: number, scale: number) => () => {
-            const w = window.innerWidth;
+            const w = sceneW();
             const width = (model.current?.offsetWidth ?? 0) * scale;
             const room = Math.max(0, (w - width) / 2 - 12);
             return dir * Math.min(w * amount, room);
@@ -328,17 +330,23 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
           };
           gsap.set(q('.h-word--first'), { transformOrigin: '0% 100%' });
           gsap.set(q('.h-word--last'), { transformOrigin: '100% 100%' });
-          /** In a chapter: beside the card (dir −1 she's left of it, +1 right), never under it, on screen. */
-          const chapterPose = (dir: -1 | 1) => {
-            const w = window.innerWidth;
+          /**
+           * In a chapter: beside that chapter's own card (dir −1 she's left of it, +1 right), never
+           * under it, on screen. Each card is measured (they differ in width, more so on wide screens).
+           */
+          const chapterPose = (dir: -1 | 1, id: string) => {
+            const w = sceneW();
             const fw = frameW();
-            const card = q(dir > 0 ? '[data-panel="index"]' : '[data-panel="work"]')[0] as HTMLElement | undefined;
+            const card = q(`[data-panel="${id}"]`)[0] as HTMLElement | undefined;
             if (!card || !fw) return { x: dir * w * 0.22, scale: 0.9 };
             const gap = AIR + 8;
+            const margin = 12;
+            // the free space on her side of the card: [from, to]
             const edge = dir > 0 ? card.offsetLeft + card.offsetWidth + gap : card.offsetLeft - gap;
-            const room = dir > 0 ? w - 6 - edge : edge - 6;
-            const scale = Math.max(0.6, Math.min(0.9, room / ((A + B) * fw)));
-            const cx = dir > 0 ? edge + A * fw * scale : edge - B * fw * scale;
+            const [from, to] = dir > 0 ? [edge, w - margin] : [margin, edge];
+            const scale = Math.max(0.6, Math.min(0.9, (to - from) / ((A + B) * fw)));
+            // in the middle of that space (equal air on both sides of her widest pose)
+            const cx = (from + to + (A - B) * fw * scale) / 2;
             return { x: cx - w / 2, scale };
           };
           const starts = full ? CHAPTERS.map((ch) => ch.start) : OPENING_STARTS;
@@ -444,10 +452,10 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
            * as her sliding over the grass. A gentle dip in depth on the way keeps it from feeling
            * like a rail. Her video plays on with the scroll the whole time.
            */
-          const walk = (dir: -1 | 1, start: number) => {
-            tl.to(her, { x: () => chapterPose(dir).x, duration: 0.8, ease: 'sine.inOut' }, start)
-              .to(her, { scale: () => chapterPose(dir).scale - 0.03, y: () => -window.innerHeight * 0.012, duration: 0.4, ease: 'sine.inOut' }, start)
-              .to(her, { scale: () => chapterPose(dir).scale, y: 0, duration: 0.4, ease: 'sine.inOut' }, start + 0.4)
+          const walk = (dir: -1 | 1, start: number, id: string) => {
+            tl.to(her, { x: () => chapterPose(dir, id).x, duration: 0.8, ease: 'sine.inOut' }, start)
+              .to(her, { scale: () => chapterPose(dir, id).scale - 0.03, y: () => -window.innerHeight * 0.012, duration: 0.4, ease: 'sine.inOut' }, start)
+              .to(her, { scale: () => chapterPose(dir, id).scale, y: 0, duration: 0.4, ease: 'sine.inOut' }, start + 0.4)
               .to(q('.backdrop-media'), { xPercent: dir * 1.4, duration: 0.8, ease: 'sine.inOut' }, start);
           };
           const panel = (id: string) => q(`[data-panel="${id}"]`);
@@ -470,7 +478,7 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
             .to(q('.h-word--last'), { x: vw(0.9), duration: 0.32, ease: 'power2.in' }, 6.04);
 
           // 04 the work — she walks left, polaroids are dealt on the right
-          walk(-1, 6.05);
+          walk(-1, 6.05, 'work');
           panelIn('work', 1, 6.6);
           tl.fromTo(
             q('.fan-item .polaroid'), // (the card inside, so each slot keeps its tilt and hover lift)
@@ -481,17 +489,17 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
           panelOut('work', 1, 7.6);
 
           // 05 index — she walks right, the categories open on the left
-          walk(1, 7.75);
+          walk(1, 7.75, 'index');
           panelIn('index', -1, 8.3);
           panelOut('index', -1, 9.2);
 
           // 06 meet Sinai — the camera pans, her letter appears beside her
-          walk(-1, 9.35);
+          walk(-1, 9.35, 'about');
           panelIn('about', 1, 9.9);
           panelOut('about', 1, 11.0);
 
           // 07 proof — she walks right, the numbers count up as you scroll
-          walk(1, 11.15);
+          walk(1, 11.15, 'proof');
           panelIn('proof', -1, 11.7);
           const counter = { v: 0 };
           const nums = q('.panel--proof [data-count]') as HTMLElement[];
@@ -518,7 +526,7 @@ export function HeroSequence({ immersive }: { immersive: boolean }) {
           panelOut('proof', -1, 12.5);
 
           // 08 write back — she walks left, the brief form waits on the right
-          walk(-1, 12.65);
+          walk(-1, 12.65, 'brief');
           panelIn('brief', 1, 13.2);
           // her video continues through the chapters, one strip picture per step of scroll
           tl.to(state, { target: END, duration: TOTAL - OPENING }, OPENING);
