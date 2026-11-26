@@ -24,6 +24,8 @@ screenshots/
 
 # shared media is copied into each site at build time
 apps/*/public/media/
+# the campaign's source video (AI watermark in the corner): only its extracted frames are published
+apps/campaign/media-src/
 # Claude Code: local-only settings and third-party skills
 .claude/settings.local.json
 .claude/skills/

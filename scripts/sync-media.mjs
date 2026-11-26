@@ -1,5 +1,5 @@
 /**
- * Copies shared media (packages/content/media) into every site's public/media,
+ * Copies shared media (packages/content/media) into every Astro site's public/media,
  * so all 3 sites serve the same files at /media/<name>.
  * Runs automatically before `dev` and `build`.
  */
@@ -12,6 +12,8 @@ const src = join(root, 'packages/content/media');
 if (!existsSync(src)) process.exit(0);
 
 for (const site of readdirSync(join(root, 'apps'))) {
+  // only the Astro sites serve the shared media (the campaign app has its own assets)
+  if (!existsSync(join(root, 'apps', site, 'astro.config.mjs'))) continue;
   const dest = join(root, 'apps', site, 'public', 'media');
   mkdirSync(dest, { recursive: true });
   for (const file of readdirSync(src)) {

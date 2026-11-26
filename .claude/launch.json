@@ -33,6 +33,30 @@
         "@mfm/desktop-diary"
       ],
       "port": 4323
+    },
+    {
+      "name": "A · Open File (port 4324)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "node_modules/astro/bin/astro.mjs",
+        "preview",
+        "--root",
+        "apps/open-file",
+        "--port",
+        "4324"
+      ],
+      "port": 4324
+    },
+    {
+      "name": "Campaign (React + Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "-w",
+        "@mfm/campaign"
+      ],
+      "port": 4325
     }
   ]
 }

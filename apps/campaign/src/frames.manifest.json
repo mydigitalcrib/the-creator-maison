@@ -1,0 +1,14 @@
+{
+  "count": 241,
+  "fps": 24,
+  "sizes": {
+    "desktop": {
+      "width": 600,
+      "height": 720
+    },
+    "mobile": {
+      "width": 400,
+      "height": 480
+    }
+  }
+}

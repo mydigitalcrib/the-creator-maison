@@ -1,6 +1,8 @@
-# Builds Site A and publishes it to GitHub Pages on every push to main.
-# Live at https://mydigitalcrib.github.io/the-creator-maison/
-name: Deploy Site A to GitHub Pages
+# Builds the sites and publishes them to GitHub Pages on every push to main.
+#   Site A (the first version):        https://mydigitalcrib.github.io/the-creator-maison/
+#   The campaign (the new version):    https://mydigitalcrib.github.io/the-creator-maison/v2/
+# Each version keeps its own link: the campaign is built into a v2/ folder next to Site A.
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -33,6 +35,12 @@ jobs:
           SITE_BASE: /the-creator-maison/
       - name: Point links at /the-creator-maison/
         run: node scripts/rebase-dist.mjs apps/open-file/dist /the-creator-maison/
+      - name: Build the campaign (v2)
+        run: npm run build -w @mfm/campaign
+        env:
+          SITE_BASE: /the-creator-maison/v2/
+      - name: Put the campaign at /v2/
+        run: cp -r apps/campaign/dist apps/open-file/dist/v2
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/open-file/dist
